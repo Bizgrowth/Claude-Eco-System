@@ -1,0 +1,932 @@
+<title>Claude Tool Advisor</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #ECEAE3;
+  --surface: #FAFAF8;
+  --surface-2: #EFEDE6;
+  --border: #D8D2C8;
+  --forest: #1E3A2F;
+  --forest-mid: #2D5542;
+  --copper: #A8621C;
+  --copper-light: #C8813C;
+  --text: #18130C;
+  --text-mid: #3E3730;
+  --text-muted: #7A7165;
+  --teal: #1A4D5C;
+  --code-blue: #1E3D5C;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131009;
+    --surface: #1C1810;
+    --surface-2: #231E14;
+    --border: #2E2820;
+    --forest: #6BA888;
+    --forest-mid: #8CC4A0;
+    --copper: #D4904A;
+    --copper-light: #E8A860;
+    --text: #EDE9E0;
+    --text-mid: #C4BAA8;
+    --text-muted: #8A7F6E;
+    --teal: #6ABCD0;
+    --code-blue: #7AB0D8;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131009;
+  --surface: #1C1810;
+  --surface-2: #231E14;
+  --border: #2E2820;
+  --forest: #6BA888;
+  --forest-mid: #8CC4A0;
+  --copper: #D4904A;
+  --copper-light: #E8A860;
+  --text: #EDE9E0;
+  --text-mid: #C4BAA8;
+  --text-muted: #8A7F6E;
+  --teal: #6ABCD0;
+  --code-blue: #7AB0D8;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  padding-inline: 20px;
+}
+
+.app {
+  max-width: 580px;
+  margin: 0 auto;
+  padding-block: 48px 72px;
+}
+
+/* ── Header ── */
+.header { margin-bottom: 44px; }
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+
+.header h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(26px, 5vw, 38px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+  text-wrap: balance;
+  margin: 0 0 10px;
+}
+
+.header-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 440px;
+  margin: 0;
+}
+
+/* ── Progress ── */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 28px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s, transform 0.3s;
+  flex-shrink: 0;
+}
+
+.dot.active  { background: var(--forest); transform: scale(1.5); }
+.dot.done    { background: var(--copper); }
+
+.progress-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── Steps ── */
+.step { display: none; }
+
+.step.active {
+  display: block;
+  animation: stepIn 0.22s ease both;
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(9px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step-q { margin-bottom: 20px; }
+
+.step-num {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.step-q h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* ── Choice cards ── */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.choice {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.choice:hover {
+  border-color: var(--forest);
+  background: color-mix(in srgb, var(--forest) 4%, var(--surface));
+}
+
+.choice:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.choice:active { background: var(--surface-2); }
+
+.choice-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--forest);
+}
+
+.choice-label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.choice-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* ── Result ── */
+.result-wrap { display: none; }
+
+.result-wrap.active {
+  display: block;
+  animation: stepIn 0.25s ease both;
+}
+
+.result-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.result-top {
+  padding: 24px 22px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.result-icon-wrap {
+  width: 50px;
+  min-width: 50px;
+  height: 50px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-claude  { background: color-mix(in srgb, var(--copper) 14%, var(--surface)); }
+.icon-cowork  { background: color-mix(in srgb, var(--teal) 14%, var(--surface)); }
+.icon-code    { background: color-mix(in srgb, var(--code-blue) 14%, var(--surface)); }
+
+.result-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.result-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.result-body { padding: 20px 22px 22px; }
+
+.result-why {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-mid);
+  margin: 0 0 18px;
+}
+
+.use-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 9px;
+}
+
+.use-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.use-list li {
+  font-size: 14px;
+  color: var(--text-mid);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.use-list li::before {
+  content: '→';
+  color: var(--copper);
+  flex-shrink: 0;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.complement-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 13px 15px;
+  margin-bottom: 22px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.complement-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 4px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.btn:hover  { opacity: 0.82; }
+.btn:active { opacity: 0.65; }
+
+.btn-primary {
+  background: var(--forest);
+  color: #fff;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+
+.btn-outline:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+  opacity: 1;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 52px 0;
+}
+
+/* ── Reference ── */
+.ref-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tool-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.tool-row {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 17px 19px;
+}
+
+.tool-row-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 9px;
+}
+
+.tool-badge {
+  width: 33px;
+  min-width: 33px;
+  height: 33px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-claude { background: color-mix(in srgb, var(--copper) 15%, var(--surface)); }
+.badge-cowork { background: color-mix(in srgb, var(--teal) 15%, var(--surface)); }
+.badge-code   { background: color-mix(in srgb, var(--code-blue) 15%, var(--surface)); }
+
+.tool-name-wrap { }
+
+.tool-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.tool-tagline {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tool-desc {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.55;
+  margin: 0 0 11px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ── Overlap guide ── */
+.overlap-section { margin-top: 40px; }
+
+.overlap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.overlap-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 13px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.overlap-when {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.overlap-when strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step.active, .result-wrap.active { animation: none; }
+}
+</style>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="eyebrow">Anthropic Suite Guide</div>
+    <h1>Which Claude should you open right now?</h1>
+    <p class="header-sub">Three questions. One clear recommendation. Stop second-guessing Claude, Claude Cowork, and Claude Code.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress" id="progress" role="status" aria-live="polite" aria-label="Wizard progress">
+    <div class="dot active" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <span class="progress-label" id="progress-label">Step 1 of 3</span>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step active" id="step-1">
+    <div class="step-q">
+      <div class="step-num">Question 1</div>
+      <h2>What best describes what you're about to do?</h2>
+    </div>
+    <div class="choices">
+      <button class="choice" onclick="answer('task','think')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Ask, think, or research</span>
+          <span class="choice-sub">Questions, analysis, reading documents, brainstorming</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('task','create')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Write or create content</span>
+          <span class="choice-sub">Drafts, proposals, reports, SOPs, client deliverables</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('task','build')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Build, code, or automate</span>
+          <span class="choice-sub">Apps, scripts, Make scenarios, dashboards, workflows</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('task','plan')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Plan, strategy, or client session</span>
+          <span class="choice-sub">Roadmaps, consulting prep, strategy sessions, scope work</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step" id="step-2">
+    <div class="step-q">
+      <div class="step-num">Question 2</div>
+      <h2>Who's involved right now?</h2>
+    </div>
+    <div class="choices">
+      <button class="choice" onclick="answer('who','solo')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Just me</span>
+          <span class="choice-sub">Working solo — I'll share the output when it's done</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('who','team')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">My team or a client — live, right now</span>
+          <span class="choice-sub">Others are on the call or in the room with me</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('who','handoff')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">I'll hand this off or publish it</span>
+          <span class="choice-sub">Building something for a client, team, or ongoing use</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step" id="step-3">
+    <div class="step-q">
+      <div class="step-num">Question 3</div>
+      <h2>What's the time horizon for this work?</h2>
+    </div>
+    <div class="choices">
+      <button class="choice" onclick="answer('scope','now')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Quick task — done this session</span>
+          <span class="choice-sub">A few minutes to an hour, then it's finished</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('scope','project')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Ongoing project</span>
+          <span class="choice-sub">Something I'll return to over days or weeks</span>
+        </div>
+      </button>
+      <button class="choice" onclick="answer('scope','recurring')">
+        <div class="choice-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        </div>
+        <div>
+          <span class="choice-label">Recurring or automated</span>
+          <span class="choice-sub">Should run on a schedule or trigger automatically</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-wrap" id="result-section">
+    <div class="result-card">
+      <div class="result-top">
+        <div class="result-icon-wrap" id="result-icon"></div>
+        <div>
+          <div class="result-label">Use this</div>
+          <h2 class="result-name" id="result-name">—</h2>
+        </div>
+      </div>
+      <div class="result-body">
+        <p class="result-why" id="result-why"></p>
+        <div class="use-heading">What this covers in your situation</div>
+        <ul class="use-list" id="result-uses"></ul>
+        <div class="complement-box" id="result-complement" hidden>
+          <div class="complement-label">Also reach for</div>
+          <span id="result-complement-text"></span>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="result-cta">Open it</button>
+          <button class="btn btn-outline" onclick="restart()">Start over</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Reference -->
+  <div class="reference">
+    <div class="ref-heading">Quick reference — All three tools</div>
+    <div class="tool-grid">
+
+      <div class="tool-row">
+        <div class="tool-row-header">
+          <div class="tool-badge badge-claude">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--copper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <div>
+            <div class="tool-name">Claude</div>
+            <div class="tool-tagline">claude.ai · your personal AI assistant</div>
+          </div>
+        </div>
+        <p class="tool-desc">Your daily driver for solo work: questions, analysis, writing, and refining. Use Projects to maintain persistent context for recurring clients or topics so Claude never starts cold.</p>
+        <div class="tags">
+          <span class="tag">Q&A</span>
+          <span class="tag">Writing</span>
+          <span class="tag">Research</span>
+          <span class="tag">Analysis</span>
+          <span class="tag">Projects</span>
+          <span class="tag">Brainstorming</span>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="tool-row-header">
+          <div class="tool-badge badge-cowork">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div>
+            <div class="tool-name">Claude Cowork</div>
+            <div class="tool-tagline">Shared AI sessions for teams</div>
+          </div>
+        </div>
+        <p class="tool-desc">Bring Claude into the room with your team or client. Shared sessions mean everyone sees the same AI context and responses — no one re-prompts separately and gets a different answer.</p>
+        <div class="tags">
+          <span class="tag">Team sessions</span>
+          <span class="tag">Client workshops</span>
+          <span class="tag">Live collaboration</span>
+          <span class="tag">Strategy</span>
+        </div>
+      </div>
+
+      <div class="tool-row">
+        <div class="tool-row-header">
+          <div class="tool-badge badge-code">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--code-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div>
+            <div class="tool-name">Claude Code</div>
+            <div class="tool-tagline">claude.ai/code · builds and automates</div>
+          </div>
+        </div>
+        <p class="tool-desc">When Claude needs to actually do something — build a dashboard, write a Make automation, create a script, deploy an app. It reads files, writes code, runs commands, and ships.</p>
+        <div class="tags">
+          <span class="tag">Apps</span>
+          <span class="tag">Automations</span>
+          <span class="tag">Scripts</span>
+          <span class="tag">Workflows</span>
+          <span class="tag">Scheduled tasks</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Overlap guide -->
+    <div class="overlap-section">
+      <div class="ref-heading" style="margin-top:32px;">Common overlaps — how to choose</div>
+      <div class="overlap-grid">
+        <div class="overlap-row">
+          <div class="overlap-when">
+            <strong>Drafting a strategy vs. building a tool from it</strong>
+            Use Claude for the thinking. Once the plan is clear, bring it to Claude Code to build the actual system.
+          </div>
+        </div>
+        <div class="overlap-row">
+          <div class="overlap-when">
+            <strong>Solo prep vs. live client session</strong>
+            Do your research and drafting in Claude alone. Switch to Cowork when the client joins so they see the same context.
+          </div>
+        </div>
+        <div class="overlap-row">
+          <div class="overlap-when">
+            <strong>One-time task vs. recurring automation</strong>
+            A task you do manually every week in Claude is a candidate for Claude Code — build it once, run it automatically.
+          </div>
+        </div>
+        <div class="overlap-row">
+          <div class="overlap-when">
+            <strong>Describing a build vs. executing it</strong>
+            Claude can explain how to build something in detail. Only Claude Code can actually build and deploy it.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const state = { task: null, who: null, scope: null };
+let currentStep = 1;
+
+function answer(key, value) {
+  state[key] = value;
+  currentStep++;
+  updateProgress();
+
+  if (currentStep > 3) {
+    showResult();
+    return;
+  }
+
+  document.querySelectorAll('.step').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('step-' + currentStep).classList.add('active');
+}
+
+function updateProgress() {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('d' + i);
+    dot.className = 'dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+  }
+  const label = document.getElementById('progress-label');
+  label.textContent = currentStep <= 3 ? ('Step ' + currentStep + ' of 3') : 'Your recommendation';
+}
+
+function getRecommendation() {
+  const t = state.task, w = state.who, s = state.scope;
+  if (t === 'build') return 'code';
+  if (s === 'recurring') return 'code';
+  if (w === 'team') return 'cowork';
+  return 'claude';
+}
+
+const recs = {
+  claude: {
+    name: 'Claude',
+    iconClass: 'icon-claude',
+    iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--copper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+    ctaText: 'Open Claude',
+    ctaUrl: 'https://claude.ai',
+    why: function(s) {
+      if (s.scope === 'project') return 'This is ongoing work — use Claude with a Project. Projects give Claude persistent context so you never re-explain the client background, goals, or constraints at the start of each session.';
+      if (s.task === 'create') return 'Claude is your best writing partner. It holds the full document in context, lets you iterate quickly, and takes you from rough draft to polished output without switching tools.';
+      if (s.task === 'plan') return 'For solo strategy work, Claude lets you think out loud, explore angles, and sharpen a plan before you take it to a client or team — all without an audience.';
+      return 'For solo work that doesn\'t involve coding or live collaboration, Claude is the right pick. Fast, conversational, and available anywhere.';
+    },
+    uses: function(s) {
+      const list = ['Questions and quick research', 'Writing and editing documents', 'Summarizing and analyzing content', 'Brainstorming and exploring ideas'];
+      if (s.scope === 'project') list.unshift('Ongoing client context via Projects');
+      if (s.task === 'plan') list.unshift('Strategy exploration and roadmap drafting');
+      return list.slice(0, 4);
+    },
+    complement: function(s) {
+      if (s.task === 'build') return null;
+      if (s.scope === 'project' || s.task === 'plan') return 'If this plan eventually needs to become a real system or automation, bring it to Claude Code once it\'s well-defined.';
+      return null;
+    }
+  },
+  cowork: {
+    name: 'Claude Cowork',
+    iconClass: 'icon-cowork',
+    iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+    ctaText: 'Open Cowork',
+    ctaUrl: 'https://claude.ai',
+    why: function() { return 'Others are in the room — Cowork keeps everyone aligned. Shared sessions mean your team or client sees the same AI context you do. No one re-prompts separately and gets a conflicting answer.'; },
+    uses: function() {
+      return ['Live strategy sessions with your team', 'Client discovery and requirements gathering', 'Reviewing deliverables together with full context', 'Shared decisions with real-time AI support'];
+    },
+    complement: function() { return 'Do your solo prep in Claude first. Come to the Cowork session with the context already framed so you\'re not wasting live time on setup.'; }
+  },
+  code: {
+    name: 'Claude Code',
+    iconClass: 'icon-code',
+    iconSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--code-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    ctaText: 'Open Claude Code',
+    ctaUrl: 'https://claude.ai/code',
+    why: function(s) {
+      if (s.scope === 'recurring') return 'Recurring and automated tasks belong in Claude Code. It writes and deploys the logic so this runs on its own — you set it up once instead of re-prompting every time.';
+      if (s.task === 'build') return 'Building means Claude needs to touch actual files — write code, run commands, and ship. Claude Code does that. A chat interface can describe a build; Claude Code executes it.';
+      return 'This task involves creating something durable: a tool, an automation, or a system. Claude Code writes and runs the code directly, not just describes it.';
+    },
+    uses: function(s) {
+      const list = ['Building apps, dashboards, and tools', 'Writing Make or automation workflows', 'Creating scripts that run on a schedule', 'Deploying client-facing systems'];
+      if (s.scope === 'recurring') list.unshift('Scheduled and triggered automations');
+      return list.slice(0, 4);
+    },
+    complement: function() { return 'Use Claude first to think through and spec out the build. Then bring that plan to Claude Code to execute it. Claude is for thinking; Claude Code is for shipping.'; }
+  }
+};
+
+function showResult() {
+  document.querySelectorAll('.step').forEach(function(el) { el.classList.remove('active'); });
+
+  const key = getRecommendation();
+  const rec = recs[key];
+
+  const iconWrap = document.getElementById('result-icon');
+  iconWrap.className = 'result-icon-wrap ' + rec.iconClass;
+  iconWrap.innerHTML = rec.iconSvg;
+
+  document.getElementById('result-name').textContent = rec.name;
+  document.getElementById('result-why').textContent = rec.why(state);
+
+  const ul = document.getElementById('result-uses');
+  ul.innerHTML = '';
+  rec.uses(state).forEach(function(text) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    ul.appendChild(li);
+  });
+
+  const complementText = rec.complement(state);
+  const complementBox = document.getElementById('result-complement');
+  if (complementText) {
+    document.getElementById('result-complement-text').textContent = complementText;
+    complementBox.hidden = false;
+  } else {
+    complementBox.hidden = true;
+  }
+
+  const cta = document.getElementById('result-cta');
+  cta.textContent = rec.ctaText;
+  cta.onclick = function() { window.open(rec.ctaUrl, '_blank', 'noopener'); };
+
+  document.getElementById('result-section').className = 'result-wrap active';
+}
+
+function restart() {
+  state.task = null;
+  state.who = null;
+  state.scope = null;
+  currentStep = 1;
+
+  document.getElementById('result-section').className = 'result-wrap';
+  document.querySelectorAll('.step').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('step-1').classList.add('active');
+
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('d' + i).className = 'dot' + (i === 1 ? ' active' : '');
+  }
+  document.getElementById('progress-label').textContent = 'Step 1 of 3';
+}
+</script>
