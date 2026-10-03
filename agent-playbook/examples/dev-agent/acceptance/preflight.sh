@@ -36,6 +36,8 @@ python3 -c "import json;json.load(open('.claude/settings.json'))" 2>/dev/null &&
 bash tests/test-verify-done.sh  >/tmp/pf_vd 2>&1 && ok "verify-done tests pass ($(grep Passed /tmp/pf_vd))" || bad "verify-done tests FAIL (see /tmp/pf_vd)"
 bash tests/test-deploy-gate.sh  >/tmp/pf_dg 2>&1 && ok "deploy-gate tests pass ($(grep Passed /tmp/pf_dg))" || bad "deploy-gate tests FAIL (see /tmp/pf_dg)"
 
+python3 tests/test_compute_limits.py >/tmp/pf_cl 2>&1 && ok "limits calculator tests pass" || bad "limits calculator tests FAIL (see /tmp/pf_cl)"
+
 # Clean state
 [ -e runs/.active ] && warn "runs/.active exists from a previous run; delete it before starting a new brief" || ok "no active run"
 

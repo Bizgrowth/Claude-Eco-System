@@ -116,7 +116,7 @@ A **failed Stop-hook block that later passes is a good sign** (the check caught 
 ## 4. After all five runs
 
 1. Fill the **summary table** in `results-template.md`.
-2. **Set limits from data, not guesses:**
+2. **Set limits from data, not guesses.** Copy `limits-input-template.json` to `results.json`, fill in every field from your results file, then run `python3 acceptance/compute-limits.py results.json` (report only). When it reports no warnings, run it again with `--apply` to write `maxTurns` into the agent files and a `limits-record.md`. It refuses to apply if a role hit its cap or fewer than two full runs passed. The rules it applies:
    - `maxTurns` per subagent = about 1.5 x the highest turn count you saw for that role in the two successful full runs (briefs 01 and 02), rounded up
    - Per-run cost cap = about 2 x the median cost of the two successful full runs (briefs 01 and 02)
    - Time target = keep "under about 2 hours" only if both full runs achieved it; otherwise state the measured figure
