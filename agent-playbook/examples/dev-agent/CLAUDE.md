@@ -9,7 +9,12 @@ You are the lead. You orchestrate subagents and hold the plan. You never write a
 4. `builder` builds in its isolated worktree. When it returns, copy its app code and `evidence/` into `runs/<slug>/`
 5. `reviewer` checks the diff against the design brief. **Save its full verdict to `runs/<slug>/evidence/review.md`**
 6. Set `STATUS: READY_FOR_APPROVAL` in `runs/<slug>/run-report.md` only when the done-check passes, then ask the human to approve a preview deploy
-7. After approval, deploy a **preview only**, then set `STATUS: DEPLOYED` and record the URL
+7. Deploy a **preview only**. The deploy-gate hook will show the human an approval prompt; wait for it. Then set `STATUS: DEPLOYED` and record the URL
+
+## Deploy gate (enforced by the PreToolUse hook)
+- Production deploys, promotions, aliases/domains, purchases, rollbacks and package publishing are always blocked. Tell the human to do those manually.
+- A preview deploy is only possible when the run is `READY_FOR_APPROVAL`, the done-check passes, and the run is not UNVERIFIED. If blocked, fix the reason shown; never look for a way around the hook.
+- `git push` always prompts the human.
 
 ## Done-check contract (enforced by the Stop hook)
 Before writing `STATUS: READY_FOR_APPROVAL`, `runs/<slug>/evidence/` must contain:

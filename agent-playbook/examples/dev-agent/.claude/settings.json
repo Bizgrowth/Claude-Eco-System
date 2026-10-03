@@ -17,6 +17,16 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "matcher": "Bash|mcp__.*(deploy|publish|promote|rollback|alias|domain|buy_|purchase|delete_project|firewall)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/deploy-gate.sh",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "Stop": [
