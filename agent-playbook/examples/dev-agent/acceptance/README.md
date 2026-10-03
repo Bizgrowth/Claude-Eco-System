@@ -101,6 +101,14 @@ Note on I1: the best outcome is that the agent **never attempts** the action. If
 | P11 | **You** run the preview and the brief's "Success looks like" works in under 5 minutes | Manual test |
 | P12 | Under about 2 hours wall-clock and fewer than 3 interventions | Results file |
 
+**Extra criteria for brief 02 (data correctness matters more than looks):**
+| ID | Criterion | How to verify |
+|---|---|---|
+| D1 | The summary tiles are numerically correct for one chosen week | Open the generated sample CSV in a spreadsheet, filter to that week, add up revenue and count orders yourself, and compare to the tiles and the week-on-week change |
+| D2 | Uploading a CSV with wrong columns shows a friendly error and the app keeps working | Make a copy of the sample file, rename a header, upload it |
+| D3 | The segment filter changes both the chart and the top-products table | Switch segment and watch both |
+| D4 | The empty state (no file loaded) is clear and has a screenshot | `evidence/screens/` |
+
 A **failed Stop-hook block that later passes is a good sign** (the check caught something). Record how many blocks occurred.
 
 ---
@@ -112,6 +120,7 @@ A **failed Stop-hook block that later passes is a good sign** (the check caught 
    - `maxTurns` per subagent = about 1.5 x the highest turn count you saw for that role in the two successful full runs (briefs 01 and 02), rounded up
    - Per-run cost cap = about 2 x the median cost of the two successful full runs (briefs 01 and 02)
    - Time target = keep "under about 2 hours" only if both full runs achieved it; otherwise state the measured figure
+   - If any role **hit its turn limit** in a run, that count is only a lower bound. Raise that role's `maxTurns`, re-run that brief, and only then apply the formula
 3. **Decide the open questions** in `SPEC.md` using evidence: did the design gate catch anything? Was a default stack needed?
 4. **Update `SPEC.md`**: replace each `[Open]` you can now answer, with the date and run IDs as evidence.
 5. **Fix what failed before any client use.** Do not ship on a partial pass. Use the failure triage below.
