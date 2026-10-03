@@ -18,6 +18,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/verify-done.sh",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   }
 }

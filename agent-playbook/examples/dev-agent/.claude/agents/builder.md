@@ -31,8 +31,8 @@ If the design brief is missing or contradicts the idea brief, stop and report. D
 
 ## Evidence you must produce (the done-check)
 Create `evidence/` and fill it:
-1. `tests.txt`: full output of the test command, showing pass/fail counts
-2. `build.txt`: full output of the production build command
+1. `tests.txt`: full output of the test command, showing pass/fail counts. **The last line must be `EXIT_CODE: <n>`** (the command's real exit code, for example by running `cmd 2>&1 | tee evidence/tests.txt; echo "EXIT_CODE: ${PIPESTATUS[0]}" >> evidence/tests.txt`)
+2. `build.txt`: full output of the production build command, with the same final `EXIT_CODE: <n>` line
 3. `screens/<screen-name>.png`: a screenshot for every screen named in the design brief, using the exact names from the brief (use a headless browser such as Playwright against the locally running app)
 4. `screens/comparison.md`: for each screen, whether it matches the design brief, a list of differences, and what you fixed
 
