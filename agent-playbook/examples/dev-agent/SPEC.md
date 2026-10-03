@@ -12,6 +12,18 @@
 ## Goal
 Given a business idea or problem, produce a researched, designed, tested, working prototype with a **deployed preview URL** the client can review, with the human approving before anything is deployed.
 
+## Operating model (decided 2026-10-03)
+**The agent stays inside Claude Code and is run by the consultant. It is not embedded in a client's product and clients do not get access to the agent itself.**
+
+What this means:
+- **Deliverable to the client** is the output: the preview URL, `research.md`, `design-brief.md`, the evidence folder and `run-report.md`. The agent, its prompts, hooks and run history stay with the consultant.
+- **Credentials:** the client's accounts and data never enter the agent's environment. The consultant uses their own throwaway or approved accounts for previews, and deploy credentials exist only in the deploying session.
+- **No Agent SDK build, hosting or client login work** is needed for this version. The `sdk-agent/` example in the starter kit is reference only.
+- **Auth and terms:** because the consultant runs it personally, normal Claude Code sign-in applies. If this ever becomes a hosted product, the Agent SDK requires API-key authentication and does not allow offering claude.ai login to third parties.
+- **Responsibility stays with the consultant:** every approval gate is a human gate, and that human is the consultant. Keep a copy of each run's evidence folder as the audit trail.
+
+**Revisit this decision if** any of these become true: a client needs to start runs without the consultant, run volume makes manual operation the bottleneck, or a client requires the agent inside their own software or data boundary. At that point compare the Agent SDK (you host) with Managed Agents (Anthropic hosts; beta and not eligible for Zero Data Retention or HIPAA BAA coverage today).
+
 ## Inputs
 - **Trigger:** the consultant starts a run manually in Claude Code (interactive session).
 - **Input:** a short brief: idea or problem, target users, constraints, any must-have features. If the brief is thin, the lead asks clarifying questions before any research starts.
@@ -88,7 +100,7 @@ Then, and only then, ask the human for deploy approval.
 3. Default tech stack for generated apps, or let the designer choose per idea?
 4. Who owns the IP and the code produced for the client?
 5. Exact turn limits and cost cap (set after 3 pilots).
-6. Does the first real client need this embedded in their own product (Agent SDK) or is consultant-operated Claude Code enough?
+6. ~~Embedded in the client's product (Agent SDK) or consultant-operated?~~ **Decided 2026-10-03: consultant-operated in Claude Code.** See *Operating model*.
 
 ## End-to-end verification (acceptance test for the agent itself)
 Run the agent on three fictional briefs: (a) a simple booking-page app, (b) a data-dashboard tool, (c) a deliberately vague brief. Pass criteria:
