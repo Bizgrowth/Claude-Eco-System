@@ -101,4 +101,4 @@ Run the agent on three fictional briefs: (a) a simple booking-page app, (b) a da
 1. ~~Create `.claude/agents/` files~~ **Done:** `researcher`, `designer`, `builder`, `reviewer`
 2. ~~Add `idea-intake` skill~~ **Done.** ~~Pre-deploy gate~~ **Done:** `.claude/hooks/deploy-gate.sh` (`tests/test-deploy-gate.sh`, 42 tests). `ship-check` remains an optional manual checklist
 3. ~~Stop-hook enforcing the done-check~~ **Done:** `.claude/hooks/verify-done.sh`, 19 tests in `tests/test-verify-done.sh`
-4. Run the three acceptance briefs in a live Claude Code session and record cost and time
+4. Run the acceptance briefs in a live Claude Code session and record cost and time. **Prepared:** five briefs, run sheet, results template, sandbox setup and preflight in `acceptance/` (start with `acceptance/README.md`). **Not yet run.**
