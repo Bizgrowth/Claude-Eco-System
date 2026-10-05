@@ -5,12 +5,15 @@ Mobile-first, installable (PWA) daily launch dashboard: priorities, to-dos, GitH
 ## Go live (one-time, ~5 min)
 1. GitHub repo → Settings → Pages → deploy from branch (root).
 2. Actions tab → run **Refresh dashboard data** once (it then runs every ~20 min).
-3. For private repos / other repos in the org: add a repo secret `GH_READ_TOKEN` (fine-grained token, read-only: Contents/Metadata, Issues, Pull requests).
+3. Create a classic token (github.com/settings/tokens) with scopes `repo` and `read:project` (add `project` only if you want write access). Add it as a repo secret named `GH_READ_TOKEN` so the Action can read private repos and Projects boards.
 4. Open the Pages URL on your phone → Add to Home Screen.
+5. On each device: More → GitHub sync → paste the token and the `owner/repo` for sync issues → Save & sync. The token stays in that browser only.
+
+## How sync works
+Priorities and to-dos are GitHub Issues in `syncRepo` (set in `data/config.json`, use a private repo) with labels `dash:priority` and `dash:todo`. Checking an item closes the issue; ✕ closes it as not planned. Completed items stay visible for 24 hours. Without a token the lists stay on the device only.
 
 ## Customize
 - Links, org name, stale thresholds, priority labels: `data/config.json`
 - Playbook rules/SOPs: arrays at the top of the script in `index.html`
 - Label GitHub issues `priority` to surface them on Today.
 
-Priorities and to-dos are stored on the device (More → Copy backup to move them).

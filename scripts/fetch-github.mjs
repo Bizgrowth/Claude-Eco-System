@@ -34,5 +34,20 @@ for (const r of repos) {
     prs: prs.slice(0, 5).map((p) => ({ title: p.title, url: p.html_url, number: p.number, draft: p.draft })),
   });
 }
-await writeFile(new URL("../data/github.json", import.meta.url), JSON.stringify({ generatedAt: new Date().toISOString(), repos: out }, null, 1));
+// Optional: GitHub Projects (v2) boards. Needs a token with read:project (classic) — GITHUB_TOKEN can't read these.
+let projects = [];
+if (cfg.projects?.enabled) {
+  const root = cfg.ownerType === "user" ? "user" : "organization";
+  const q = `query($login:String!){ ${root}(login:$login){ projectsV2(first:20){ nodes{ title url closed
+    items(first:100){ nodes{ content{ ... on Issue{title url} ... on PullRequest{title url} ... on DraftIssue{title} }
+      fieldValueByName(name:"Status"){ ... on ProjectV2ItemFieldSingleSelectValue{ name } } } } } } } }`;
+  try {
+    const r = await fetch("https://api.github.com/graphql", { method: "POST", headers: H, body: JSON.stringify({ query: q, variables: { login: cfg.owner } }) });
+    const j = await r.json();
+    if (j.errors) throw new Error(j.errors[0].message);
+    projects = j.data[root].projectsV2.nodes.map((p) => ({ title: p.title, url: p.url, closed: p.closed,
+      items: p.items.nodes.map((n) => ({ title: n.content?.title ?? "(untitled)", url: n.content?.url ?? null, status: n.fieldValueByName?.name ?? null })) }));
+  } catch (e) { console.warn("Projects skipped:", e.message); }
+}
+await writeFile(new URL("../data/github.json", import.meta.url), JSON.stringify({ generatedAt: new Date().toISOString(), repos: out, projects }, null, 1));
 console.log(`Wrote ${out.length} repos`);

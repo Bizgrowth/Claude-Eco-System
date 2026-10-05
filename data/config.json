@@ -3,17 +3,57 @@
   "ownerType": "org",
   "includeArchived": false,
   "excludeRepos": [],
-  "priorityLabels": ["priority", "p1", "urgent"],
+  "priorityLabels": [
+    "priority",
+    "p1",
+    "urgent"
+  ],
   "staleDaysYellow": 7,
   "staleDaysRed": 21,
   "launch": [
-    { "label": "Claude Chat", "icon": "💬", "url": "https://claude.ai/new" },
-    { "label": "Claude Code", "icon": "⌨️", "url": "https://claude.ai/code" },
-    { "label": "Cowork (desktop app)", "icon": "🗂️", "url": "https://claude.ai/download" },
-    { "label": "GitHub", "icon": "🐙", "url": "https://github.com/bizgrowth" },
-    { "label": "GitHub Projects", "icon": "📋", "url": "https://github.com/orgs/bizgrowth/projects" },
-    { "label": "All my PRs", "icon": "🔀", "url": "https://github.com/pulls" },
-    { "label": "Anthropic Docs", "icon": "📚", "url": "https://docs.claude.com" },
-    { "label": "Claude Code Docs", "icon": "📖", "url": "https://code.claude.com/docs" }
-  ]
+    {
+      "label": "Claude Chat",
+      "icon": "\ud83d\udcac",
+      "url": "https://claude.ai/new"
+    },
+    {
+      "label": "Claude Code",
+      "icon": "\u2328\ufe0f",
+      "url": "https://claude.ai/code"
+    },
+    {
+      "label": "Cowork (desktop app)",
+      "icon": "\ud83d\uddc2\ufe0f",
+      "url": "https://claude.ai/download"
+    },
+    {
+      "label": "GitHub",
+      "icon": "\ud83d\udc19",
+      "url": "https://github.com/bizgrowth"
+    },
+    {
+      "label": "GitHub Projects",
+      "icon": "\ud83d\udccb",
+      "url": "https://github.com/orgs/bizgrowth/projects"
+    },
+    {
+      "label": "All my PRs",
+      "icon": "\ud83d\udd00",
+      "url": "https://github.com/pulls"
+    },
+    {
+      "label": "Anthropic Docs",
+      "icon": "\ud83d\udcda",
+      "url": "https://docs.claude.com"
+    },
+    {
+      "label": "Claude Code Docs",
+      "icon": "\ud83d\udcd6",
+      "url": "https://code.claude.com/docs"
+    }
+  ],
+  "syncRepo": "bizgrowth/claude-eco-system",
+  "projects": {
+    "enabled": true
+  }
 }

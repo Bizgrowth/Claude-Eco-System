@@ -68,8 +68,10 @@ ol,ul{padding-left:20px;margin:6px 0}li{margin:4px 0}
 <!-- TODAY -->
 <section class="tab on" id="tab-today">
   <div class="banner" id="needs"></div>
+  <div class="banner" id="sync" style="display:none"></div>
   <h2>Top 3 priorities</h2>
-  <div class="card" id="prios"></div>
+  <div class="card"><div id="prios"></div>
+    <div class="row" id="prioAdd" style="margin-top:6px"><input type="text" id="newPrio" placeholder="Add a priority…" enterkeyhint="done"><button class="primary fit" id="addPrio">Add</button></div></div>
   <h2>To-dos</h2>
   <div class="card">
     <div class="row" style="margin-bottom:6px"><input type="text" id="newTodo" placeholder="Add a to-do…" enterkeyhint="done"><button class="primary fit" id="addTodo">Add</button></div>
@@ -86,6 +88,7 @@ ol,ul{padding-left:20px;margin:6px 0}li{margin:4px 0}
 <section class="tab" id="tab-projects">
   <h2>Project status</h2>
   <div class="stats card" id="summary"></div>
+  <div id="boards"></div>
   <div class="pill-row" id="filters"></div>
   <div id="repos"></div>
   <div class="small muted" id="stamp"></div>
@@ -109,9 +112,18 @@ ol,ul{padding-left:20px;margin:6px 0}li{margin:4px 0}
 
 <!-- SETTINGS -->
 <section class="tab" id="tab-more">
-  <h2>Setup &amp; sync</h2>
+  <h2>GitHub sync</h2>
   <div class="card small">
-    <p><b>Your data</b> (priorities and to-dos) is saved only on this device. Use Backup to move it to another device.</p>
+    <p>Connect once per device and your priorities and to-dos sync everywhere as GitHub Issues (labels <code>dash:priority</code> and <code>dash:todo</code>).</p>
+    <input type="text" id="tokIn" placeholder="GitHub token (ghp_…)" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin-bottom:8px">
+    <input type="text" id="repoIn" placeholder="owner/repo for sync issues" autocapitalize="off" style="margin-bottom:8px">
+    <div class="row"><button class="primary" id="saveSync">Save &amp; sync</button><button id="offSync">Disconnect</button></div>
+    <p class="muted" id="syncState" style="margin-bottom:0"></p>
+    <div class="callout">The token is stored only in this browser, never in the repo. Use a <b>private</b> repo for sync issues. If you lose a phone, revoke the token at github.com/settings/tokens.</div>
+  </div>
+  <h2>Backup</h2>
+  <div class="card small">
+    <p>Offline copy of your current lists.</p>
     <div class="row"><button id="export">Copy backup</button><button id="import">Restore from paste</button></div>
     <textarea id="blob" rows="3" placeholder="Backup text appears / paste here" style="margin-top:8px"></textarea>
   </div>
@@ -196,38 +208,74 @@ const hr = new Date().getHours();
 $("#greet").textContent = (hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening");
 $("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
-/* ---------- priorities & todos ---------- */
-let prios = store.get("prios", ["", "", ""]);
-let todos = store.get("todos", []);
-function renderPrios() {
-  $("#prios").innerHTML = prios.map((p, i) => `<div class="item ${p.done ? "done" : ""}">
-    <input type="checkbox" data-pc="${i}" ${p.done ? "checked" : ""} aria-label="Done">
-    <div class="t"><input type="text" data-pi="${i}" value="${esc(p.text ?? p)}" placeholder="Priority ${i + 1}…"></div></div>`).join("");
+/* ---------- priorities & todos (local, or synced via GitHub Issues) ---------- */
+let cfg = { launch: [], staleDaysYellow: 7, staleDaysRed: 21 }, gh = { repos: [], generatedAt: null }, filter = "all";
+const LBL = { prio: "dash:priority", todo: "dash:todo" };
+const SYNC = { get token() { return store.get("token", ""); }, get repo() { return store.get("syncRepo", "") || cfg.syncRepo || ""; } };
+const synced = () => !!(SYNC.token && SYNC.repo);
+let lists = {
+  prio: store.get("prio", null) ?? store.get("prios", []).map((p) => ({ id: uid(), text: p.text ?? p, done: !!p.done })).filter((x) => x.text),
+  todo: store.get("todo", null) ?? store.get("todos", []),
+};
+const persist = () => { store.set("prio", lists.prio); store.set("todo", lists.todo); };
+function setSync(msg, bad) { const el = $("#sync"); el.textContent = msg || ""; el.style.display = msg ? "block" : "none"; el.style.color = bad ? "var(--red)" : ""; $("#syncState").textContent = msg || ""; }
+
+async function api(method, path, body) {
+  const r = await fetch("https://api.github.com" + path, { method, headers: { Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(r.status === 401 ? "token rejected (401)" : r.status === 404 ? "repo not found or no access (404)" : "GitHub error " + r.status);
+  return r.json();
 }
-$("#prios").addEventListener("input", (e) => { const i = e.target.dataset.pi; if (i == null) return; const p = prios[i]; prios[i] = { text: e.target.value, done: !!p?.done }; store.set("prios", prios); });
-$("#prios").addEventListener("change", (e) => { const i = e.target.dataset.pc; if (i == null) return; const p = prios[i]; prios[i] = { text: p?.text ?? p ?? "", done: e.target.checked }; store.set("prios", prios); renderPrios(); });
-function renderTodos() {
-  $("#todos").innerHTML = todos.length ? todos.map((t) => `<div class="item ${t.done ? "done" : ""}">
-    <input type="checkbox" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="Done"><div class="t">${esc(t.text)}</div>
-    <button class="x" data-del="${t.id}" aria-label="Delete">✕</button></div>`).join("") : '<div class="muted small">Nothing yet. Add your first to-do.</div>';
+async function pull() {
+  if (!synced()) { setSync(""); return renderLists(); }
+  try {
+    const [p, t] = await Promise.all(["prio", "todo"].map((k) => api("GET", `/repos/${SYNC.repo}/issues?labels=${encodeURIComponent(LBL[k])}&state=all&sort=updated&per_page=100`)));
+    const conv = (arr) => arr.filter((i) => !i.pull_request && (i.state === "open" || (i.state_reason === "completed" && Date.now() - new Date(i.closed_at) < 864e5)))
+      .map((i) => ({ id: String(i.number), n: i.number, text: i.title, done: i.state === "closed" })).sort((a, b) => a.done - b.done);
+    lists.prio = conv(p); lists.todo = conv(t); persist(); setSync("☁️ Synced with GitHub");
+  } catch (e) { setSync("Sync problem: " + e.message + ". Showing saved copy.", true); }
+  renderLists();
 }
-function addTodo() { const v = $("#newTodo").value.trim(); if (!v) return; todos.unshift({ id: uid(), text: v, done: false }); $("#newTodo").value = ""; store.set("todos", todos); renderTodos(); }
-$("#addTodo").onclick = addTodo;
-$("#newTodo").addEventListener("keydown", (e) => e.key === "Enter" && addTodo());
-$("#todos").addEventListener("click", (e) => {
-  const id = e.target.dataset.id, del = e.target.dataset.del;
-  if (id) { const t = todos.find((x) => x.id === id); t.done = e.target.checked; }
-  if (del) todos = todos.filter((x) => x.id !== del);
-  if (id || del) { store.set("todos", todos); renderTodos(); }
-});
-$("#clearDone").onclick = () => { todos = todos.filter((t) => !t.done); store.set("todos", todos); renderTodos(); };
+async function push(label, fn) { if (!synced()) return; try { await fn(); setSync("☁️ Synced with GitHub"); } catch (e) { setSync("Couldn't save to GitHub: " + e.message, true); } }
+function addItem(k, text) {
+  const it = { id: uid(), text, done: false }; lists[k].unshift(it); persist(); renderLists();
+  push("add", async () => { const i = await api("POST", `/repos/${SYNC.repo}/issues`, { title: text, labels: [LBL[k]] }); it.n = i.number; it.id = String(i.number); persist(); });
+}
+function setDone(k, id, done) {
+  const it = lists[k].find((x) => x.id === id); if (!it) return; it.done = done; persist(); renderLists();
+  push("done", async () => { if (it.n) await api("PATCH", `/repos/${SYNC.repo}/issues/${it.n}`, done ? { state: "closed", state_reason: "completed" } : { state: "open", state_reason: "reopened" }); });
+}
+function removeItem(k, id) {
+  const it = lists[k].find((x) => x.id === id); lists[k] = lists[k].filter((x) => x.id !== id); persist(); renderLists();
+  push("del", async () => { if (it?.n) await api("PATCH", `/repos/${SYNC.repo}/issues/${it.n}`, { state: "closed", state_reason: "not_planned" }); });
+}
+const rowHtml = (k, t) => `<div class="item ${t.done ? "done" : ""}"><input type="checkbox" data-k="${k}" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="Done"><div class="t">${esc(t.text)}</div><button class="x" data-k="${k}" data-del="${t.id}" aria-label="Delete">✕</button></div>`;
+function renderLists() {
+  $("#prios").innerHTML = lists.prio.length ? lists.prio.map((t) => rowHtml("prio", t)).join("") : '<div class="muted small">What are the 3 outcomes that make today a win?</div>';
+  $("#prioAdd").style.display = lists.prio.filter((t) => !t.done).length >= 3 ? "none" : "flex";
+  $("#todos").innerHTML = lists.todo.length ? lists.todo.map((t) => rowHtml("todo", t)).join("") : '<div class="muted small">Nothing yet. Add your first to-do.</div>';
+  $("#clearDone").style.display = synced() ? "none" : "";
+}
+for (const [k, inp, btn] of [["prio", "#newPrio", "#addPrio"], ["todo", "#newTodo", "#addTodo"]]) {
+  const go = () => { const v = $(inp).value.trim(); if (!v) return; $(inp).value = ""; addItem(k, v); };
+  $(btn).onclick = go; $(inp).addEventListener("keydown", (e) => e.key === "Enter" && go());
+}
+document.addEventListener("click", (e) => { const d = e.target.dataset; if (d.del) removeItem(d.k, d.del); });
+document.addEventListener("change", (e) => { const d = e.target.dataset; if (d.k && d.id && e.target.type === "checkbox") setDone(d.k, d.id, e.target.checked); });
+$("#clearDone").onclick = () => { lists.todo = lists.todo.filter((t) => !t.done); persist(); renderLists(); };
+$("#tokIn").value = ""; $("#repoIn").value = SYNC.repo;
+$("#saveSync").onclick = async () => {
+  const t = $("#tokIn").value.trim(), r = $("#repoIn").value.trim();
+  if (t) store.set("token", t); store.set("syncRepo", r);
+  $("#tokIn").value = ""; if (!synced()) return setSync("Enter a token and owner/repo.", true);
+  setSync("Syncing…"); await pull();
+};
+$("#offSync").onclick = () => { try { localStorage.removeItem("cmd:token"); } catch {} setSync("Disconnected. Lists stay on this device only."); };
 
 /* ---------- config / github data ---------- */
-let cfg = { launch: [], staleDaysYellow: 7, staleDaysRed: 21 }, gh = { repos: [], generatedAt: null }, filter = "all";
 async function load() {
   try { cfg = await (await fetch("data/config.json", { cache: "no-cache" })).json(); } catch {}
   try { gh = await (await fetch("data/github.json", { cache: "no-cache" })).json(); } catch {}
-  renderLaunch(); renderProjects(); renderToday();
+  renderLaunch(); renderProjects(); renderBoards(); renderToday(); $("#repoIn").value = SYNC.repo; pull();
 }
 function health(r) {
   const d = (Date.now() - new Date(r.pushedAt)) / 864e5;
@@ -262,6 +310,16 @@ function renderProjects() {
   </div>`).join("") : `<div class="card muted small">${gh.generatedAt ? "Nothing in this filter." : "No data yet. Enable GitHub Actions and run “Refresh dashboard data”."}</div>`;
   $("#stamp").textContent = gh.generatedAt ? "Data refreshed " + ago(gh.generatedAt) + " (" + new Date(gh.generatedAt).toLocaleString() + ")" : "";
 }
+function renderBoards() {
+  const ps = (gh.projects || []).filter((p) => !p.closed);
+  $("#boards").innerHTML = ps.map((p) => {
+    const by = {}; p.items.forEach((i) => { const k = i.status || "No status"; by[k] = (by[k] || 0) + 1; });
+    const open = p.items.filter((i) => !/^(done|complete|closed|shipped)/i.test(i.status || "")).slice(0, 8);
+    return `<div class="card"><div class="repohead"><span>📋</span><h3><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a></h3></div>
+      <div>${Object.entries(by).map(([k, v]) => `<span class="chip">${esc(k)}: ${v}</span>`).join("")}</div>
+      ${open.map((i) => `<div class="small" style="margin-top:6px">• ${i.url ? `<a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">${esc(i.title)}</a>` : esc(i.title)} <span class="muted">(${esc(i.status || "No status")})</span></div>`).join("")}</div>`;
+  }).join("");
+}
 $("#filters").addEventListener("click", (e) => { if (e.target.dataset.f) { filter = e.target.dataset.f; renderProjects(); } });
 $("#refresh").onclick = load;
 
@@ -277,10 +335,10 @@ $("#rules").innerHTML = RULES.map((r) => `<li>${r}</li>`).join("");
 $("#sops").innerHTML = SOPS.map((s, i) => `<details ${i === 0 ? "open" : ""}><summary>${esc(s.t)}</summary><div class="body"><ol>${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol><div class="callout"><b>Done when:</b> ${esc(s.done)}</div></div></details>`).join("");
 
 /* ---------- backup ---------- */
-$("#export").onclick = async () => { const s = JSON.stringify({ prios, todos }); $("#blob").value = s; try { await navigator.clipboard.writeText(s); } catch {} };
-$("#import").onclick = () => { try { const o = JSON.parse($("#blob").value); if (Array.isArray(o.prios)) prios = o.prios; if (Array.isArray(o.todos)) todos = o.todos; store.set("prios", prios); store.set("todos", todos); renderPrios(); renderTodos(); } catch { alert("That doesn't look like a valid backup."); } };
+$("#export").onclick = async () => { const s = JSON.stringify(lists); $("#blob").value = s; try { await navigator.clipboard.writeText(s); } catch {} };
+$("#import").onclick = () => { try { const o = JSON.parse($("#blob").value); if (Array.isArray(o.prio)) lists.prio = o.prio; if (Array.isArray(o.todo)) lists.todo = o.todo; persist(); renderLists(); } catch { alert("That doesn't look like a valid backup."); } };
 
-renderPrios(); renderTodos(); load();
+renderLists(); load();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
 </body>
