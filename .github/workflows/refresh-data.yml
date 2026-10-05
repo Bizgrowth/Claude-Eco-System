@@ -1,0 +1,19 @@
+name: Refresh dashboard data
+on:
+  schedule: [{ cron: "*/20 * * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    environment: GH_READ_TOKEN  # the GitHub environment that holds the GH_READ_TOKEN secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node scripts/fetch-github.mjs
+        env:
+          # Classic token: repo + read:project. Writes github.json into the PRIVATE data repo.
+          GH_TOKEN: ${{ secrets.GH_READ_TOKEN }}
+          DATA_REPO: Bizgrowth/bizgrowth-dashboard-data

@@ -1,788 +1,348 @@
-<title>Claude Expert</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Claude Command Center</title>
 <style>
-:root {
-  --bg: #ECEAE3;
-  --surface: #FAFAF8;
-  --surface-2: #EFEDE6;
-  --border: #D8D2C8;
-  --forest: #1E3A2F;
-  --copper: #A8621C;
-  --text: #18130C;
-  --text-mid: #3E3730;
-  --text-muted: #7A7165;
-  --teal: #1A4D5C;
-  --blue: #1E3D5C;
-  --beg-bg: #E8F4EE; --beg-txt: #1E5C38;
-  --int-bg: #FFF2E0; --int-txt: #8A4E0A;
-  --adv-bg: #FDE8D8; --adv-txt: #8A3A10;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #131009; --surface: #1C1810; --surface-2: #231E14; --border: #2E2820;
-    --forest: #6BA888; --copper: #D4904A; --text: #EDE9E0; --text-mid: #C4BAA8;
-    --text-muted: #8A7F6E; --teal: #6ABCD0; --blue: #7AB0D8;
-    --beg-bg: #1A3028; --beg-txt: #7AC898;
-    --int-bg: #2A1E08; --int-txt: #D4904A;
-    --adv-bg: #281408; --adv-txt: #E88050;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #131009; --surface: #1C1810; --surface-2: #231E14; --border: #2E2820;
-  --forest: #6BA888; --copper: #D4904A; --text: #EDE9E0; --text-mid: #C4BAA8;
-  --text-muted: #8A7F6E; --teal: #6ABCD0; --blue: #7AB0D8;
-  --beg-bg: #1A3028; --beg-txt: #7AC898;
-  --int-bg: #2A1E08; --int-txt: #D4904A;
-  --adv-bg: #281408; --adv-txt: #E88050;
-  color-scheme: dark;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
-
-.shell { display: flex; flex-direction: column; min-height: 100%; }
-
-/* Header */
-.app-header { position: sticky; top: env(safe-area-inset-top,0px); z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); }
-.top-bar { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px 9px; }
-.brand { display: flex; align-items: center; gap: 9px; font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 17px; color: var(--text); }
-.brand-dot { width: 27px; height: 27px; border-radius: 7px; background: var(--forest); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.streak-chip { font-size: 12px; font-weight: 600; color: var(--copper); background: color-mix(in srgb, var(--copper) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--copper) 25%, transparent); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
-.tab-nav { display: flex; gap: 4px; padding: 0 16px 11px; overflow-x: auto; scrollbar-width: none; }
-.tab-nav::-webkit-scrollbar { display: none; }
-.tab-btn { font-family: inherit; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1.5px solid transparent; cursor: pointer; white-space: nowrap; background: transparent; color: var(--text-muted); transition: all 0.14s; flex-shrink: 0; }
-.tab-btn:hover { background: var(--surface-2); color: var(--text); }
-.tab-btn.active { background: var(--forest); color: #fff; border-color: var(--forest); }
-.tab-btn:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-
-/* Content */
-.main-content { flex: 1; max-width: 640px; margin: 0 auto; width: 100%; padding-inline: 20px; padding-block: 26px 72px; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; animation: panelIn 0.18s ease both; }
-@keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Panel header */
-.panel-header { margin-bottom: 22px; }
-.panel-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--copper); margin-bottom: 5px; }
-.panel-header h2 { font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 700; color: var(--text); margin: 0 0 3px; text-wrap: balance; }
-.panel-sub { font-size: 14px; color: var(--text-muted); margin: 0; }
-
-/* Tip card */
-.tip-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.14s; }
-.tip-card.learned { border-color: color-mix(in srgb, var(--forest) 40%, var(--border)); }
-.tip-card-top { display: flex; align-items: center; gap: 9px; padding: 12px 15px 11px; border-bottom: 1px solid var(--border); }
-.tool-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.tool-pip.claude { background: var(--copper); }
-.tool-pip.cowork { background: var(--teal); }
-.tool-pip.code   { background: var(--blue); }
-.tool-chip { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); flex: 1; }
-.lvl-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
-.lvl-badge.beginner     { background: var(--beg-bg); color: var(--beg-txt); }
-.lvl-badge.intermediate { background: var(--int-bg); color: var(--int-txt); }
-.lvl-badge.advanced     { background: var(--adv-bg); color: var(--adv-txt); }
-.tip-body-wrap { padding: 13px 15px 11px; }
-.tip-title { font-family: 'Fraunces', Georgia, serif; font-size: 15px; font-weight: 600; color: var(--text); margin: 0 0 5px; line-height: 1.3; text-wrap: balance; }
-.tip-text { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin: 0; }
-.tip-foot { display: flex; align-items: center; justify-content: space-between; padding: 9px 15px 12px; gap: 8px; }
-.cat-tag { font-size: 11px; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; font-weight: 500; }
-.learn-btn { font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 20px; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--text-muted); transition: all 0.14s; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
-.learn-btn:hover { border-color: var(--forest); color: var(--forest); }
-.learn-btn.done { background: color-mix(in srgb, var(--forest) 10%, var(--surface)); border-color: color-mix(in srgb, var(--forest) 35%, transparent); color: var(--forest); }
-.learn-btn:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-
-/* Today */
-.today-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 6px; }
-.today-date { font-size: 13px; color: var(--text-muted); }
-.today-learned { font-size: 13px; color: var(--text-muted); }
-.daily-stack { display: flex; flex-direction: column; gap: 13px; }
-.section-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin: 28px 0 14px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
-
-/* Library */
-.filter-row { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
-.filter-sep { width: 1px; background: var(--border); height: 26px; align-self: center; margin-inline: 2px; }
-.fpill { font-family: inherit; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.14s; white-space: nowrap; }
-.fpill:hover { background: var(--surface-2); color: var(--text); }
-.fpill.on { background: var(--surface); border-color: var(--text-mid); color: var(--text); font-weight: 600; }
-.fpill:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-.lib-meta { font-size: 13px; color: var(--text-muted); margin: 14px 0 16px; }
-.lib-stack { display: flex; flex-direction: column; gap: 10px; }
-
-/* Progress */
-.prog-tools { display: flex; flex-direction: column; gap: 18px; }
-.prog-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 18px 19px; }
-.prog-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
-.prog-tool-name { font-family: 'Fraunces', Georgia, serif; font-size: 17px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 9px; }
-.prog-frac { font-size: 13px; color: var(--text-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
-.prog-track { background: var(--surface-2); border-radius: 20px; height: 7px; overflow: hidden; margin-bottom: 12px; }
-.prog-fill { height: 100%; border-radius: 20px; background: var(--forest); transition: width 0.5s ease; min-width: 0; }
-.prog-levels { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
-.prog-lvl { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
-.prog-lvl.beginner     { background: var(--beg-bg); color: var(--beg-txt); }
-.prog-lvl.intermediate { background: var(--int-bg); color: var(--int-txt); }
-.prog-lvl.advanced     { background: var(--adv-bg); color: var(--adv-txt); }
-.milestone { padding: 9px 11px; border-radius: 8px; font-size: 13px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); }
-.milestone.lit { background: color-mix(in srgb, var(--forest) 8%, var(--surface)); border-color: color-mix(in srgb, var(--forest) 25%, transparent); color: var(--forest); font-weight: 600; }
-
-/* Advisor wizard */
-.wiz-wrap { max-width: 540px; }
-.wiz-progress { display: flex; align-items: center; gap: 7px; margin-bottom: 24px; }
-.wdot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: background .3s, transform .3s; flex-shrink: 0; }
-.wdot.active { background: var(--forest); transform: scale(1.5); }
-.wdot.done   { background: var(--copper); }
-.wiz-prog-label { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
-.wstep { display: none; }
-.wstep.active { display: block; animation: panelIn .22s ease both; }
-.wstep-num { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
-.wstep h3 { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: var(--text); margin: 0 0 18px; text-wrap: balance; }
-.wchoices { display: flex; flex-direction: column; gap: 8px; }
-.wchoice { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 15px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; text-align: left; width: 100%; font-family: inherit; color: var(--text); transition: border-color .14s, background .14s; }
-.wchoice:hover { border-color: var(--forest); background: color-mix(in srgb, var(--forest) 4%, var(--surface)); }
-.wchoice:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-.wchoice:active { background: var(--surface-2); }
-.wicon { width: 34px; min-width: 34px; height: 34px; border-radius: 7px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--forest); }
-.wlabel { display: block; font-weight: 600; font-size: 14px; margin-bottom: 1px; }
-.wsub { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-.wresult { display: none; }
-.wresult.active { display: block; animation: panelIn .25s ease both; }
-.wres-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 13px; overflow: hidden; }
-.wres-top { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 14px; }
-.wres-icon { width: 46px; min-width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-.wres-icon.wi-claude { background: color-mix(in srgb, var(--copper) 14%, var(--surface)); }
-.wres-icon.wi-cowork { background: color-mix(in srgb, var(--teal) 14%, var(--surface)); }
-.wres-icon.wi-code   { background: color-mix(in srgb, var(--blue) 14%, var(--surface)); }
-.wres-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
-.wres-name { font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 700; color: var(--text); margin: 0; }
-.wres-body { padding: 18px 20px 20px; }
-.wres-why { font-size: 14px; line-height: 1.65; color: var(--text-mid); margin: 0 0 15px; }
-.wuses-head { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-.wuses { list-style: none; padding: 0; margin: 0 0 15px; display: flex; flex-direction: column; gap: 5px; }
-.wuses li { font-size: 13px; color: var(--text-mid); display: flex; align-items: flex-start; gap: 7px; line-height: 1.5; }
-.wuses li::before { content: '→'; color: var(--copper); flex-shrink: 0; font-weight: 600; line-height: 1.5; }
-.wcomplement { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.55; }
-.wcomp-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); margin-bottom: 3px; }
-.wactions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn { font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: none; transition: opacity .15s; line-height: 1; }
-.btn:hover { opacity: .82; }
-.btn:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
-.btn-primary { background: var(--forest); color: #fff; }
-.btn-outline { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
-.btn-outline:hover { border-color: var(--text-muted); color: var(--text); opacity: 1; }
-
-@media (prefers-reduced-motion: reduce) {
-  .tab-panel.active, .wstep.active, .wresult.active { animation: none; }
-  .prog-fill, .wdot { transition: none; }
-}
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1c1b19;--mute:#6b6862;--line:#e4e1da;--accent:#c4592f;--accent-ink:#fff;--green:#2f8f5b;--yellow:#b7791f;--red:#c0392b;--chip:#efece6}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--ink:#ecebe8;--mute:#9a978f;--line:#2a2e36;--accent:#e07a52;--accent-ink:#1a1209;--green:#4cc38a;--yellow:#e3b04b;--red:#ef6f62;--chip:#222730}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px calc(84px + env(safe-area-inset-bottom));padding-top:env(safe-area-inset-top)}
+main{max-width:760px;margin:0 auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;padding:20px 0 8px}
+h1{font-size:22px;margin:0}h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:24px 0 10px}
+h3{font-size:17px;margin:0 0 6px}
+.sub{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+a{color:inherit}
+button,.btn{font:inherit;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.primary,.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+input[type=text],textarea{font:inherit;width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:8px}.row>*{flex:1}.row>.fit{flex:0 0 auto}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:620px){.grid{grid-template-columns:repeat(4,1fr)}}
+.tile{flex-direction:column;min-height:76px;text-align:center;font-size:14px;padding:10px 6px}.tile .ic{font-size:24px}
+.tab{display:none}.tab.on{display:block}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav button{flex:1;border:0;background:none;flex-direction:column;font-size:11px;gap:2px;min-height:52px;color:var(--mute)}
+nav button .ic{font-size:20px}nav button.on{color:var(--accent);font-weight:700}
+.item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item input[type=checkbox]{width:24px;height:24px;margin-top:1px;accent-color:var(--accent);flex:0 0 auto}
+.item.done .t{text-decoration:line-through;color:var(--mute)}
+.item .t{flex:1;word-break:break-word}.x{min-height:32px;border:0;background:none;color:var(--mute);padding:0 8px}
+.dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto;display:inline-block}
+.green{background:var(--green)}.yellow{background:var(--yellow)}.red{background:var(--red)}.gray{background:var(--mute)}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:3px 10px;font-size:12px;margin:4px 6px 0 0;text-decoration:none}
+.repohead{display:flex;align-items:center;gap:8px}.repohead h3{margin:0;flex:1;word-break:break-all}
+.num{font-size:26px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.pill-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}.pill-row button{min-height:38px;white-space:nowrap;border-radius:99px;font-size:14px}
+.pill-row button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
+summary{padding:14px;font-weight:600;cursor:pointer;min-height:44px;list-style:none}summary::-webkit-details-marker{display:none}
+summary::after{content:"＋";float:right;color:var(--mute)}details[open] summary::after{content:"－"}
+details .body{padding:0 14px 14px}
+ol,ul{padding-left:20px;margin:6px 0}li{margin:4px 0}
+.callout{border-left:4px solid var(--accent);background:var(--chip);padding:10px 12px;border-radius:8px;margin:10px 0;font-size:14px}
+.rec{border:2px solid var(--accent)}
+.muted{color:var(--mute)}.small{font-size:13px}
+.banner{background:var(--chip);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px}
 </style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1 id="greet">Command Center</h1><div class="sub" id="today"></div></div>
+  <button id="refresh" aria-label="Reload data">↻</button>
+</header>
 
-<div class="shell">
-  <header class="app-header">
-    <div class="top-bar">
-      <div class="brand">
-        <div class="brand-dot">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        Claude Expert
-      </div>
-      <div class="streak-chip" id="streak-chip">Loading…</div>
-    </div>
-    <nav class="tab-nav" role="tablist" aria-label="Main navigation">
-      <button class="tab-btn active" onclick="switchTab('today')" data-tab="today" role="tab" aria-selected="true">Today</button>
-      <button class="tab-btn" onclick="switchTab('library')" data-tab="library" role="tab" aria-selected="false">Library</button>
-      <button class="tab-btn" onclick="switchTab('advisor')" data-tab="advisor" role="tab" aria-selected="false">Advisor</button>
-      <button class="tab-btn" onclick="switchTab('progress')" data-tab="progress" role="tab" aria-selected="false">Progress</button>
-    </nav>
-  </header>
+<!-- TODAY -->
+<section class="tab on" id="tab-today">
+  <div class="banner" id="needs"></div>
+  <div class="banner" id="sync" style="display:none"></div>
+  <h2>Top 3 priorities</h2>
+  <div class="card"><div id="prios"></div>
+    <div class="row" id="prioAdd" style="margin-top:6px"><input type="text" id="newPrio" placeholder="Add a priority…" enterkeyhint="done"><button class="primary fit" id="addPrio">Add</button></div></div>
+  <h2>To-dos</h2>
+  <div class="card">
+    <div class="row" style="margin-bottom:6px"><input type="text" id="newTodo" placeholder="Add a to-do…" enterkeyhint="done"><button class="primary fit" id="addTodo">Add</button></div>
+    <div id="todos"></div>
+    <div class="small muted" style="margin-top:8px"><button id="clearDone" class="small" style="min-height:36px">Clear completed</button></div>
+  </div>
+  <h2>From GitHub: flagged priority</h2>
+  <div class="card" id="ghPrio"></div>
+  <h2>Quick launch</h2>
+  <div class="grid" id="launch"></div>
+</section>
 
-  <main class="main-content">
-    <div id="panel-today" class="tab-panel active"></div>
+<!-- PROJECTS -->
+<section class="tab" id="tab-projects">
+  <h2>Project status</h2>
+  <div class="stats card" id="summary"></div>
+  <div id="boards"></div>
+  <div class="pill-row" id="filters"></div>
+  <div id="repos"></div>
+  <div class="small muted" id="stamp"></div>
+</section>
 
-    <div id="panel-library" class="tab-panel">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Knowledge Library</div>
-        <h2>All tips</h2>
-        <p class="panel-sub">Filter by tool and level. Check off each tip as you apply it.</p>
-      </div>
-      <div class="filter-row" id="lib-filters"></div>
-      <div class="lib-meta" id="lib-meta"></div>
-      <div class="lib-stack" id="lib-stack"></div>
-    </div>
+<!-- PLAYBOOK -->
+<section class="tab" id="tab-play">
+  <h2>Which Claude do I use?</h2>
+  <div class="card">
+    <div class="small muted" style="margin-bottom:8px">Tap what you're trying to do:</div>
+    <div class="pill-row" id="chooser" style="flex-wrap:wrap;overflow:visible"></div>
+  </div>
+  <div id="answer"></div>
 
-    <div id="panel-advisor" class="tab-panel">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Tool Advisor</div>
-        <h2>Which Claude right now?</h2>
-        <p class="panel-sub">Three questions. One clear recommendation.</p>
-      </div>
-      <div class="wiz-wrap">
-        <div class="wiz-progress" id="wiz-prog">
-          <div class="wdot active" id="wd1"></div>
-          <div class="wdot" id="wd2"></div>
-          <div class="wdot" id="wd3"></div>
-          <span class="wiz-prog-label" id="wiz-prog-label">Step 1 of 3</span>
-        </div>
-        <div class="wstep active" id="wstep-1">
-          <div class="wstep-num">Question 1</div>
-          <h3>What are you about to do?</h3>
-          <div class="wchoices">
-            <button class="wchoice" onclick="wAnswer('task','think')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
-              <div><span class="wlabel">Ask, think, or research</span><span class="wsub">Questions, analysis, brainstorming, documents</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('task','create')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
-              <div><span class="wlabel">Write or create content</span><span class="wsub">Drafts, proposals, reports, SOPs</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('task','build')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-              <div><span class="wlabel">Build, code, or automate</span><span class="wsub">Apps, scripts, Make scenarios, workflows</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('task','plan')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
-              <div><span class="wlabel">Plan, strategy, or client session</span><span class="wsub">Roadmaps, consulting prep, scope work</span></div>
-            </button>
-          </div>
-        </div>
-        <div class="wstep" id="wstep-2">
-          <div class="wstep-num">Question 2</div>
-          <h3>Who's involved right now?</h3>
-          <div class="wchoices">
-            <button class="wchoice" onclick="wAnswer('who','solo')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-              <div><span class="wlabel">Just me</span><span class="wsub">Working solo, sharing output when done</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('who','team')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-              <div><span class="wlabel">Team or client — live right now</span><span class="wsub">Others are on the call or in the room</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('who','handoff')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>
-              <div><span class="wlabel">I'll hand this off or publish it</span><span class="wsub">Creating for a client, team, or ongoing use</span></div>
-            </button>
-          </div>
-        </div>
-        <div class="wstep" id="wstep-3">
-          <div class="wstep-num">Question 3</div>
-          <h3>What's the time horizon?</h3>
-          <div class="wchoices">
-            <button class="wchoice" onclick="wAnswer('scope','now')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-              <div><span class="wlabel">Quick — done this session</span><span class="wsub">A few minutes to an hour</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('scope','project')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></div>
-              <div><span class="wlabel">Ongoing project</span><span class="wsub">Returning to it over days or weeks</span></div>
-            </button>
-            <button class="wchoice" onclick="wAnswer('scope','recurring')">
-              <div class="wicon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
-              <div><span class="wlabel">Recurring or automated</span><span class="wsub">Should run on a schedule or trigger</span></div>
-            </button>
-          </div>
-        </div>
-        <div class="wresult" id="wresult">
-          <div class="wres-card">
-            <div class="wres-top">
-              <div class="wres-icon" id="wres-icon"></div>
-              <div><div class="wres-label">Use this</div><h3 class="wres-name" id="wres-name">—</h3></div>
-            </div>
-            <div class="wres-body">
-              <p class="wres-why" id="wres-why"></p>
-              <div class="wuses-head">What this covers</div>
-              <ul class="wuses" id="wres-uses"></ul>
-              <div class="wcomplement" id="wres-comp" hidden>
-                <div class="wcomp-label">Also reach for</div>
-                <span id="wres-comp-text"></span>
-              </div>
-              <div class="wactions">
-                <button class="btn btn-primary" id="wres-cta">Open it</button>
-                <button class="btn btn-outline" onclick="wRestart()">Start over</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <h2>Golden rules</h2>
+  <div class="card"><ol id="rules"></ol></div>
 
-    <div id="panel-progress" class="tab-panel"></div>
-  </main>
-</div>
+  <h2>SOPs</h2>
+  <div id="sops"></div>
+</section>
+
+<!-- SETTINGS -->
+<section class="tab" id="tab-more">
+  <h2>GitHub sync</h2>
+  <div class="card small">
+    <p>Connect once per device and your priorities and to-dos sync everywhere as GitHub Issues (labels <code>dash:priority</code> and <code>dash:todo</code>).</p>
+    <input type="text" id="tokIn" placeholder="GitHub token (ghp_…)" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin-bottom:8px">
+    <input type="text" id="repoIn" placeholder="owner/repo for sync issues" autocapitalize="off" style="margin-bottom:8px">
+    <div class="row"><button class="primary" id="saveSync">Save &amp; sync</button><button id="offSync">Disconnect</button></div>
+    <p class="muted" id="syncState" style="margin-bottom:0"></p>
+    <div class="callout">The token is stored only in this browser, never in the repo. Use a <b>private</b> repo for sync issues. If you lose a phone, revoke the token at github.com/settings/tokens.</div>
+  </div>
+  <h2>Backup</h2>
+  <div class="card small">
+    <p>Offline copy of your current lists.</p>
+    <div class="row"><button id="export">Copy backup</button><button id="import">Restore from paste</button></div>
+    <textarea id="blob" rows="3" placeholder="Backup text appears / paste here" style="margin-top:8px"></textarea>
+  </div>
+  <div class="card small">
+    <b>Install on your phone</b>
+    <ul><li><b>iPhone:</b> open in Safari → Share → Add to Home Screen.</li><li><b>Android:</b> Chrome → ⋮ → Install app.</li></ul>
+  </div>
+  <div class="card small"><b>Change links &amp; repos:</b> edit <code>data/config.json</code> in the repo (or ask Claude Code to do it). GitHub data refreshes every ~20 min via the “Refresh dashboard data” Action.</div>
+</section>
+</main>
+
+<nav>
+  <button data-tab="today" class="on"><span class="ic">🏠</span>Today</button>
+  <button data-tab="projects"><span class="ic">📊</span>Projects</button>
+  <button data-tab="play"><span class="ic">🧭</span>Playbook</button>
+  <button data-tab="more"><span class="ic">⚙️</span>More</button>
+</nav>
 
 <script>
-/* ── DATA ── */
-var TIPS = [
-  // CLAUDE · BEGINNER
-  {id:'c1',tool:'claude',level:'beginner',cat:'Projects',
-   title:'Projects keep context alive',
-   body:'Create a Project for each active client. Add their background, goals, and your working notes as project instructions. Claude reads it automatically every session — no re-explaining who they are, what they need, or where you left off.'},
-  {id:'c2',tool:'claude',level:'beginner',cat:'Prompting',
-   title:'Lead with your output format',
-   body:'Start with the structure you want: "Write a 3-bullet exec summary" or "Give me a numbered checklist." Claude formats to match your opening line. This single habit eliminates most re-formatting requests.'},
-  {id:'c3',tool:'claude',level:'beginner',cat:'Documents',
-   title:'Upload documents directly',
-   body:'PDFs, Word docs, spreadsheets — paste or upload them into chat. Ask "summarize this" or "what are the key risks here?" before you\'ve read it yourself. Claude handles the first pass so you can focus on judgment, not synthesis.'},
-  {id:'c4',tool:'claude',level:'beginner',cat:'Prompting',
-   title:'Use the role frame',
-   body:'"Act as a senior operations consultant reviewing this SOP" changes both the tone and the depth of the response. The more specific the role and the context you give it, the more specific and useful the output.'},
-  {id:'c5',tool:'claude',level:'beginner',cat:'Workflow',
-   title:'Regenerate, don\'t restart',
-   body:'When Claude misses the mark, hit regenerate and add one clarifying sentence. Don\'t open a new conversation — the prior context helps the next attempt. Restarting loses everything Claude already understood.'},
-  {id:'c6',tool:'claude',level:'beginner',cat:'Organization',
-   title:'Name your conversations',
-   body:'Rename chats as soon as you start them. "New conversation (47)" is unsearchable. A clear name like "Q3 Strategy — Acme" means you can find it in 2 seconds, not 2 minutes. Takes 5 seconds; saves 5 minutes later.'},
-  {id:'c7',tool:'claude',level:'beginner',cat:'Workflow',
-   title:'Voice mode for faster thinking',
-   body:'On mobile, voice mode is faster than typing for exploratory brainstorming. Talk through a problem out loud, then ask Claude to structure what you said. Useful for capturing ideas between meetings.'},
-  // CLAUDE · INTERMEDIATE
-  {id:'c8',tool:'claude',level:'intermediate',cat:'Settings',
-   title:'Custom instructions are your default persona',
-   body:'Go to Settings → Custom Instructions. Set your role, communication preferences, and recurring context once. Every new chat inherits them automatically. Stops you from re-framing who you are at the start of every conversation.'},
-  {id:'c9',tool:'claude',level:'intermediate',cat:'Prompting',
-   title:'Chain prompts, don\'t compound them',
-   body:'Research → outline → draft → critique → polish. Each prompt builds on the previous output. One mega-prompt trying to do all five steps at once usually loses precision at each stage. Break the work into deliberate phases.'},
-  {id:'c10',tool:'claude',level:'intermediate',cat:'Prompting',
-   title:'Surface your blind spots',
-   body:'"What questions should I be asking about this that I haven\'t asked yet?" This one prompt surfaces gaps in your thinking before a client or colleague does. Use it before delivering any significant work.'},
-  {id:'c11',tool:'claude',level:'intermediate',cat:'Strategy',
-   title:'The steelman move',
-   body:'After developing a strategy, ask "Steelman the strongest objection to this plan." Claude argues against you with real rigor, surfacing weaknesses and risks. Fixes them before the client finds them.'},
-  {id:'c12',tool:'claude',level:'intermediate',cat:'Prompting',
-   title:'Compare mode',
-   body:'"Give me two versions: a conservative approach and a bold one." Pick elements from each and merge them. This gives you range you wouldn\'t generate from a single directional prompt, and often the best answer sits between the two.'},
-  {id:'c13',tool:'claude',level:'intermediate',cat:'Analysis',
-   title:'Multi-document synthesis',
-   body:'Paste 3–4 related documents and ask "What themes are consistent across all of these? What contradicts?" Valuable for due diligence, competitive analysis, and bringing multiple stakeholder inputs into a single coherent picture.'},
-  {id:'c14',tool:'claude',level:'intermediate',cat:'Strategy',
-   title:'Run a pre-mortem before submitting',
-   body:'"Imagine this proposal failed badly six months from now. What went wrong and why?" Forces you to address the most likely failure modes before the client sees it. A two-minute habit that catches expensive mistakes.'},
-  // CLAUDE · ADVANCED
-  {id:'c15',tool:'claude',level:'advanced',cat:'Projects',
-   title:'Build a prompt library in a Project',
-   body:'Create a Project called "Prompt Library." Paste your 10 most-used prompt templates. Reference them in any chat by name: "Use the Proposal Opener template." Standardizes your outputs and saves setup time across every engagement.'},
-  {id:'c16',tool:'claude',level:'advanced',cat:'Prompting',
-   title:'Use Claude as a structured interviewer',
-   body:'"Ask me one question at a time to help me clarify this strategy. Wait for my answer before asking the next one." Slows down and deepens your thinking in a way that open-ended prompts don\'t. Excellent for defining scope before a big engagement.'},
-  {id:'c17',tool:'claude',level:'advanced',cat:'Prompting',
-   title:'XML delimiters for complex prompts',
-   body:'For prompts with multiple inputs, use XML-style tags: <context>...</context> <task>...</task> <constraints>...</constraints>. Claude parses each section precisely. Especially useful when you\'re combining a client brief, a template, and specific instructions in one prompt.'},
-  {id:'c18',tool:'claude',level:'advanced',cat:'Strategy',
-   title:'Build a personal operating system project',
-   body:'Create a Project with your values, decision-making criteria, and working principles. Ask Claude to "evaluate this decision against my operating principles" before major moves. Gives you consistent judgment at scale rather than ad hoc reasoning.'},
-  {id:'c19',tool:'claude',level:'advanced',cat:'Strategy',
-   title:'Reverse-engineer the skeptic',
-   body:'"What would a skeptical CFO ask after reading this?" or "What\'s missing from this deck that a client who\'s been burned before would notice?" The best final check before any high-stakes client deliverable. Costs 30 seconds.'},
-  {id:'c20',tool:'claude',level:'advanced',cat:'Analysis',
-   title:'Reverse-engineer competitor deliverables',
-   body:'Paste a competitor\'s proposal, methodology, or marketing copy and ask "What assumptions is this built on? What\'s missing? What would I do differently?" Builds competitive intelligence and sharpens your own positioning at the same time.'},
-  // COWORK · BEGINNER
-  {id:'cw1',tool:'cowork',level:'beginner',cat:'Setup',
-   title:'Load context before the client joins',
-   body:'Open the session 10 minutes early. Paste the client background, today\'s agenda, and any relevant documents. Claude is fully briefed before anyone else arrives. The first 10 minutes of a client meeting are too valuable to spend on orientation.'},
-  {id:'cw2',tool:'cowork',level:'beginner',cat:'Facilitation',
-   title:'One typist per session',
-   body:'Assign one person to type prompts. Multiple people prompting simultaneously creates conflicting threads and confuses the shared context. You drive the keyboard; others contribute verbally and watch the responses unfold.'},
-  {id:'cw3',tool:'cowork',level:'beginner',cat:'Facilitation',
-   title:'Open every session with a brief',
-   body:'First prompt: "Here\'s our agenda for today: [list]. Confirm you understand and summarize what we\'re working to accomplish." Sets shared context instantly, so the client sees Claude oriented to their goals from the first exchange.'},
-  {id:'cw4',tool:'cowork',level:'beginner',cat:'Documentation',
-   title:'Use it as a live note-taker',
-   body:'"Capture every decision and commitment made in this conversation as a running list." Ask for the summary at the end. The follow-up email writes itself from the session output — no separate note-taking required.'},
-  {id:'cw5',tool:'cowork',level:'beginner',cat:'Client work',
-   title:'Brief new clients before the meeting',
-   body:'Tell clients what Cowork is before the session: "We\'ll use AI together in real time — you\'ll see exactly what I\'m asking and what it produces." Removes surprise and frames it as a transparency advantage, not a shortcut.'},
-  // COWORK · INTERMEDIATE
-  {id:'cw6',tool:'cowork',level:'intermediate',cat:'Discovery',
-   title:'Pre-write your discovery questions',
-   body:'Before a client session, draft 10–15 discovery questions in Claude alone. Then bring them into Cowork: "Today we\'ll work through these questions together." You get the depth of solo prep with the live energy of a shared session.'},
-  {id:'cw7',tool:'cowork',level:'intermediate',cat:'Client work',
-   title:'Let clients watch the draft happen',
-   body:'Instead of presenting a finished proposal, draft it live in Cowork. Client buy-in is significantly higher when they watch it take shape with their input than when they receive a polished document that feels like a fait accompli.'},
-  {id:'cw8',tool:'cowork',level:'intermediate',cat:'Strategy',
-   title:'The live gap analysis',
-   body:'With client present: "Here\'s our current state. Here\'s our goal. What\'s missing?" Clients fill in the gaps in real time — you capture everything. Beats asking them to complete homework they never return.'},
-  {id:'cw9',tool:'cowork',level:'intermediate',cat:'Documentation',
-   title:'Close every session with a debrief prompt',
-   body:'"Summarize: key decisions made, open questions, action items with owners, and what we agreed to defer." Paste into your follow-up email. A 30-second prompt produces a complete meeting record that would take 20 minutes to write manually.'},
-  {id:'cw10',tool:'cowork',level:'intermediate',cat:'Client work',
-   title:'Visibility is a differentiator',
-   body:'Clients who watch you use AI fluently in real time trust your judgment more, not less. Cowork turns your process into a visible proof of expertise. It signals rigor and thoroughness rather than replacing your thinking.'},
-  // COWORK · ADVANCED
-  {id:'cw11',tool:'cowork',level:'advanced',cat:'Facilitation',
-   title:'Let Claude facilitate the meeting',
-   body:'"You are a neutral facilitator for this strategy session. When I give you a topic, ask one clarifying question at a time to the group and log each response before moving on." Claude runs the structure; you manage the energy.'},
-  {id:'cw12',tool:'cowork',level:'advanced',cat:'Client work',
-   title:'Co-create SOPs live with clients',
-   body:'Build standard operating procedures live in Cowork with the client team. Everyone contributes to the structure, Claude drafts the language, and the client owns the output. Fewer revision cycles because they built it with you.'},
-  {id:'cw13',tool:'cowork',level:'advanced',cat:'Workflow',
-   title:'Two-stage session workflow',
-   body:'After a Cowork session, export the transcript and paste it into Claude alone: "Turn this into a polished client deliverable in my usual format." Cowork captures the live thinking; Claude alone refines it into the finished product.'},
-  {id:'cw14',tool:'cowork',level:'advanced',cat:'Strategy',
-   title:'Live competitive intelligence',
-   body:'During a strategy session: "Research [competitor] and summarize their positioning, pricing model, and key differentiators while we continue talking." Real-time intelligence surfaced during the meeting, not two days after it.'},
-  // CODE · BEGINNER
-  {id:'cc1',tool:'code',level:'beginner',cat:'Getting started',
-   title:'Start with intent, not instructions',
-   body:'Tell Claude Code what you want to achieve, not how to build it. "I need a dashboard that shows my top 10 HubSpot deals by close date" is better than "create a React component that renders a table." Let it choose the implementation.'},
-  {id:'cc2',tool:'code',level:'beginner',cat:'Workflow',
-   title:'Read before you write',
-   body:'Share your files and ask "Understand this codebase first. Tell me what it does before we make any changes." Prevents Claude Code from building on wrong assumptions and catches existing patterns it should follow.'},
-  {id:'cc3',tool:'code',level:'beginner',cat:'Workflow',
-   title:'Review the plan before approving',
-   body:'Claude Code describes what it\'s about to do before touching your files. Read it. If anything sounds off, clarify before it acts. One clarifying question at this stage prevents an hour of untangling later.'},
-  {id:'cc4',tool:'code',level:'beginner',cat:'Setup',
-   title:'CLAUDE.md is your project briefing',
-   body:'Create a CLAUDE.md file in your project root. Write the project overview, key files, coding conventions, and constraints. Claude Code reads it at the start of every session — you never need to re-orient it.'},
-  {id:'cc5',tool:'code',level:'beginner',cat:'Workflow',
-   title:'Audit before you build',
-   body:'"Before building anything, check what already exists in this project that could serve this purpose." Avoids duplication and saves build time. Claude Code often finds that 70% of what you asked for already exists in a different form.'},
-  {id:'cc6',tool:'code',level:'beginner',cat:'Workflow',
-   title:'Small steps beat big jumps',
-   body:'"Build only the data connection first — nothing else. We\'ll add the UI in the next step." Smaller tasks produce fewer errors and are easier to review. A build that works in five stages is faster than one that breaks in one.'},
-  // CODE · INTERMEDIATE
-  {id:'cc7',tool:'code',level:'intermediate',cat:'Planning',
-   title:'Phase your builds',
-   body:'Define Phase 1, 2, 3 before Claude Code writes a line. "Phase 1 is only the data schema. Phase 2 is the automation logic. Phase 3 is the UI." Each phase is a separate, reviewable session. Keeps scope contained and progress visible.'},
-  {id:'cc8',tool:'code',level:'intermediate',cat:'Automations',
-   title:'Make scenarios are readable code',
-   body:'"Read this Make scenario export and tell me exactly what it does, step by step, in plain English." Great for auditing automations you inherited, onboarding clients to their own systems, or documenting workflows before handing them off.'},
-  {id:'cc9',tool:'code',level:'intermediate',cat:'Documentation',
-   title:'Document as you build',
-   body:'End every session: "Write a plain-English description of everything you built today that a non-technical team member could follow." Documentation writes itself during the build rather than becoming a separate project you never finish.'},
-  {id:'cc10',tool:'code',level:'intermediate',cat:'Quality',
-   title:'Test before you deploy',
-   body:'"Write 5 test cases for this automation before we deploy it. What inputs would break it?" Catches edge cases before production. Especially important for client-facing automations where a failure is visible and trust-damaging.'},
-  {id:'cc11',tool:'code',level:'intermediate',cat:'Integrations',
-   title:'MCP servers connect your real stack',
-   body:'Connect Claude Code to your actual tools via MCP. With Airtable, HubSpot, or Notion connected, Claude Code reads and writes real data — not just code about it. Turns a coding tool into a live business operations tool.'},
-  // CODE · ADVANCED
-  {id:'cc12',tool:'code',level:'advanced',cat:'Workflow',
-   title:'Chain sessions with handoff notes',
-   body:'End each session: "Write a handoff note for the next session: what was built, what\'s pending, and what decisions were deferred." Start the next session by reading it. Maintains continuity without re-reading the whole chat history.'},
-  {id:'cc13',tool:'code',level:'advanced',cat:'Automations',
-   title:'Automate what you repeat',
-   body:'If you manually run a task in Claude more than three times — a weekly report, a data pull, a summary — ask Claude Code to build an automation that runs it on a schedule. Your time compounds when recurring tasks run without you.'},
-  {id:'cc14',tool:'code',level:'advanced',cat:'Client work',
-   title:'Generate client-facing docs from code',
-   body:'"Generate a non-technical user guide for this automation, written for someone who has never seen code." Produces handoff documentation your client can actually follow. Billable deliverable generated in 5 minutes.'},
-  {id:'cc15',tool:'code',level:'advanced',cat:'Quality',
-   title:'Security audit before delivery',
-   body:'Before handing a build to a client: "Review this code for security issues, hardcoded credentials, and anything a client should know before using it." Catches what you missed under deadline pressure. Protects your reputation.'},
-  {id:'cc16',tool:'code',level:'advanced',cat:'Workflow',
-   title:'Worktrees for safe experiments',
-   body:'Use worktree mode to run experimental builds in isolated branches. Test without touching your main codebase. Merge only what works. Critical when you\'re iterating on a client production system and can\'t afford to break it.'}
+"use strict";
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const safeUrl = (u) => (/^https:\/\//.test(u) ? u : "#");
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem("cmd:" + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("cmd:" + k, JSON.stringify(v)); } catch {} },
+};
+const uid = () => Math.random().toString(36).slice(2, 9);
+const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 864e5; return d < 1 ? "today" : d < 2 ? "yesterday" : Math.floor(d) + "d ago"; };
+
+/* ---------- playbook content ---------- */
+const CHOOSER = [
+  { q: "Think / draft / decide", tool: "chat", why: "You want an answer, a draft or a plan that you will act on yourself." },
+  { q: "Quick question on my phone", tool: "chat", why: "Zero setup; best for on-the-go thinking and clarifying the problem before handing off." },
+  { q: "Research a topic or client", tool: "chat", why: "Use a Project with saved client context/files so every chat starts informed." },
+  { q: "Produce a report, deck or spreadsheet", tool: "cowork", why: "A multi-step deliverable built from your files, with no command line." },
+  { q: "Organize / clean up files & folders", tool: "cowork", why: "Cowork works directly with files you give it access to on your computer." },
+  { q: "Recurring ops task (weekly report)", tool: "cowork", why: "Set it up once as a repeatable task instead of re-prompting every week." },
+  { q: "Build or fix software", tool: "code", why: "It reads the whole repo, runs commands and tests, and commits to git." },
+  { q: "Ship an MVP / automation script", tool: "code", why: "Plan first, then let it build; review the diff and PR on your phone." },
+  { q: "Fix CI or review comments on a PR", tool: "code", why: "Turn on auto-fix for the PR; it responds to CI failures and comments." },
+  { q: "Work in a browser / web app for me", tool: "addons", why: "Claude in Chrome handles browser-based tasks." },
+  { q: "Repeat my house style / process", tool: "addons", why: "Package it as a Skill so it loads automatically when relevant." },
+  { q: "Connect Claude to Notion, Slack, Drive…", tool: "addons", why: "Use MCP connectors so Claude can read and act in those tools." },
+];
+const TOOLS = {
+  chat: { name: "Claude Chat (web / mobile app)", tag: "Thinking", use: "Answers, drafts, brainstorming, analysis, planning. Projects keep client context.", skip: "When you need files changed, commands run, or code committed." },
+  cowork: { name: "Claude Cowork (desktop app)", tag: "Doing", use: "Multi-step knowledge work on your files: reports, spreadsheets, research packs, file organization, recurring tasks.", skip: "When the output is software in a repo (use Code) or you just need a quick answer (use Chat)." },
+  code: { name: "Claude Code (web, mobile Code tab, terminal, IDE)", tag: "Building", use: "Features, bugs, refactors, automations, MVPs, PRs. Cloud sessions keep running when you close your laptop and are steerable from your phone.", skip: "For documents/ops deliverables with no code involved." },
+  addons: { name: "Add-ons: Chrome · Skills · MCP connectors · API", tag: "Extend", use: "Chrome for browser tasks, Skills for repeatable know-how, MCP connectors for tools like Notion/Slack/GitHub, API when embedding Claude in a client product.", skip: "Before the core tool works well on its own; add one at a time." },
+};
+const RULES = [
+  "<b>Chat to think → Code to build → Cowork to deliver.</b> Start in the cheapest tool that can finish the job.",
+  "<b>Plan before building.</b> Ask Code for a plan first; approve it, then execute.",
+  "<b>One task per session.</b> Small scoped sessions beat one giant one. Run several in parallel in the cloud.",
+  "<b>Everything important goes into GitHub</b> (issues, branches, PRs). It is the source of truth this dashboard reads.",
+  "<b>Review before merge.</b> Read the diff summary and CI result on your phone; never merge red.",
+  "<b>Never paste secrets</b> (API keys, client passwords) into chats or repos. Use environment variables.",
+  "<b>Write it down once.</b> Repeated instruction → CLAUDE.md (for Code) or a Skill (for everything else).",
+  "<b>Label top work <code>priority</code></b> in GitHub; it shows on your Today screen.",
+];
+const SOPS = [
+  { t: "☀️ Daily launch (5 min)", steps: ["Open Today → read the “needs you” banner.", "Set your Top 3 priorities (outcomes, not tasks).", "Open Projects → look at red/yellow cards first.", "Kick off 1–3 Claude Code cloud sessions for coding work, then walk away.", "Park anything fuzzy in Chat to clarify before it becomes a task."], done: "Top 3 set and at least one session running." },
+  { t: "💬 SOP: Claude Chat", steps: ["Use a Project per client/initiative and add its key files and instructions.", "State goal, audience, constraints and desired format.", "Ask for options + a recommendation, not just one answer.", "Turn the result into a GitHub issue (to build) or hand to Cowork (to produce)."], done: "A decision, a draft, or a clear ticket." },
+  { t: "🗂️ SOP: Claude Cowork", steps: ["Pick the folder and give access only to what the task needs.", "Describe the finished deliverable and where to save it.", "Let it run; review the output file, not the chat.", "If it repeats weekly, save it as a recurring task.", "Spot-check numbers and names before sending to a client."], done: "Deliverable file saved, reviewed and sent." },
+  { t: "⌨️ SOP: Claude Code", steps: ["Open claude.ai/code (or the Code tab in the app) and choose the repo.", "Ask for a plan first; reply with edits.", "Approve; let it implement and run tests.", "Review the diff and CI; ask for changes by comment.", "Create the PR; optionally turn on auto-fix; merge when green.", "Close the linked GitHub issue."], done: "PR merged, issue closed, dashboard card green." },
+  { t: "🚀 SOP: New client MVP", steps: ["Chat: define the problem, users, success metric (1 page).", "Code: create repo, README and an issue list; build the thinnest slice.", "Cowork: produce the client-facing summary/roadmap deck.", "Weekly: review status cards; message the client from the dashboard facts."], done: "Working MVP + client summary delivered." },
+  { t: "🧩 Add-ons: when & how", steps: ["Chrome: tasks that live in a web UI.", "Skills: house style, SOP templates, proposal formats.", "MCP connectors: Notion, Slack, Drive, Gmail, calendar.", "API: only when embedding Claude into a product."], done: "One add-on at a time, each solving a named pain." },
+  { t: "🛟 When something goes wrong", steps: ["Session stuck → send a short follow-up with the exact error.", "Wrong direction → say what to keep, what to drop; start fresh session if long.", "CI red → ask Code to reproduce the failure first, then fix.", "Never skip tests to get green."], done: "Root cause fixed, CI green." },
 ];
 
-var TOOL_LABELS = { claude: 'Claude', cowork: 'Claude Cowork', code: 'Claude Code' };
-var LEVEL_ORDER = ['beginner','intermediate','advanced'];
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.id === "tab-" + b.dataset.tab));
+  scrollTo(0, 0);
+}));
 
-/* ── STATE ── */
-var state = { learned: {}, streak: 0, lastVisit: '', libTool: 'all', libLevel: 'all' };
+/* ---------- header ---------- */
+const hr = new Date().getHours();
+$("#greet").textContent = (hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening");
+$("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
-function loadState() {
-  try {
-    var raw = localStorage.getItem('claude-expert-v1');
-    if (raw) { var s = JSON.parse(raw); state.learned = s.learned || {}; state.streak = s.streak || 0; state.lastVisit = s.lastVisit || ''; }
-  } catch(e) {}
-  var today = todayStr();
-  if (state.lastVisit !== today) {
-    var yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    var yStr = dateStr(yesterday);
-    state.streak = (state.lastVisit === yStr) ? state.streak + 1 : 1;
-    state.lastVisit = today;
-    saveState();
-  }
-}
-
-function saveState() {
-  try { localStorage.setItem('claude-expert-v1', JSON.stringify({ learned: state.learned, streak: state.streak, lastVisit: state.lastVisit })); } catch(e) {}
-}
-
-function todayStr() { return dateStr(new Date()); }
-function dateStr(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-
-/* ── TABS ── */
-var activeTab = 'today';
-function switchTab(id) {
-  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.tab-btn').forEach(function(b){
-    var on = b.getAttribute('data-tab') === id;
-    b.classList.toggle('active', on);
-    b.setAttribute('aria-selected', on ? 'true' : 'false');
-  });
-  document.getElementById('panel-'+id).classList.add('active');
-  activeTab = id;
-  if (id === 'today') renderToday();
-  if (id === 'library') renderLibrary();
-  if (id === 'progress') renderProgress();
-}
-
-/* ── TIP CARD ── */
-function tipCard(tip, compact) {
-  var done = !!state.learned[tip.id];
-  var lvlLabel = tip.level.charAt(0).toUpperCase() + tip.level.slice(1);
-  return '<div class="tip-card'+(done?' learned':'')+'" id="card-'+tip.id+'">'
-    +'<div class="tip-card-top">'
-    +'<div class="tool-pip '+tip.tool+'"></div>'
-    +'<span class="tool-chip">'+TOOL_LABELS[tip.tool]+'</span>'
-    +'<span class="lvl-badge '+tip.level+'">'+lvlLabel+'</span>'
-    +'</div>'
-    +'<div class="tip-body-wrap">'
-    +'<p class="tip-title">'+esc(tip.title)+'</p>'
-    +'<p class="tip-text">'+esc(tip.body)+'</p>'
-    +'</div>'
-    +'<div class="tip-foot">'
-    +'<span class="cat-tag">'+esc(tip.cat)+'</span>'
-    +'<button class="learn-btn'+(done?' done':'')+'" onclick="toggleLearned(\''+tip.id+'\')">'
-    +(done?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Learned':'Mark learned')
-    +'</button>'
-    +'</div>'
-    +'</div>';
-}
-
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function toggleLearned(id) {
-  if (state.learned[id]) { delete state.learned[id]; } else { state.learned[id] = true; }
-  saveState();
-  var card = document.getElementById('card-'+id);
-  if (card) {
-    var tip = TIPS.find(function(t){ return t.id===id; });
-    var newHtml = tipCard(tip);
-    card.outerHTML = newHtml;
-  }
-  updateStreak();
-  if (activeTab === 'progress') renderProgress();
-}
-
-function updateStreak() {
-  var total = Object.keys(state.learned).length;
-  document.getElementById('streak-chip').textContent = state.streak + (state.streak===1?' day':' days') + ' · ' + total + ' learned';
-  var todayEl = document.getElementById('today-learned');
-  if (todayEl) todayEl.textContent = Object.keys(state.learned).length + ' of ' + TIPS.length + ' tips learned';
-}
-
-/* ── TODAY ── */
-function renderToday() {
-  var dayIdx = Math.floor(Date.now() / 86400000);
-  var tools = ['claude','cowork','code'];
-  var cards = '';
-  tools.forEach(function(tool) {
-    var toolTips = TIPS.filter(function(t){ return t.tool===tool; });
-    var tip = toolTips[dayIdx % toolTips.length];
-    cards += tipCard(tip);
-  });
-
-  var d = new Date();
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  var dateLabel = days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate();
-
-  document.getElementById('panel-today').innerHTML =
-    '<div class="panel-header"><div class="panel-eyebrow">Daily Brief</div>'
-    +'<h2>Today\'s three tips</h2>'
-    +'<p class="panel-sub">One tip per tool, refreshed daily. Mark each one learned after you apply it.</p></div>'
-    +'<div class="today-meta">'
-    +'<span class="today-date">'+dateLabel+'</span>'
-    +'<span class="today-learned" id="today-learned">'+Object.keys(state.learned).length+' of '+TIPS.length+' tips learned</span>'
-    +'</div>'
-    +'<div class="daily-stack">'+cards+'</div>'
-    +'<div class="section-label">Coming up tomorrow</div>'
-    +'<div class="daily-stack">'+tools.map(function(tool){
-      var toolTips=TIPS.filter(function(t){return t.tool===tool;});
-      var tip=toolTips[(dayIdx+1)%toolTips.length];
-      return '<div class="tip-card" style="opacity:.55;pointer-events:none">'
-        +'<div class="tip-card-top"><div class="tool-pip '+tool+'"></div><span class="tool-chip">'+TOOL_LABELS[tool]+'</span>'
-        +'<span class="lvl-badge '+tip.level+'">'+tip.level.charAt(0).toUpperCase()+tip.level.slice(1)+'</span></div>'
-        +'<div class="tip-body-wrap"><p class="tip-title">'+esc(tip.title)+'</p></div></div>';
-    }).join('')+'</div>';
-
-  updateStreak();
-}
-
-/* ── LIBRARY ── */
-function renderLibrary() {
-  var toolF = state.libTool || 'all';
-  var levelF = state.libLevel || 'all';
-
-  var toolBtns = ['all','claude','cowork','code'].map(function(v){
-    var label = v==='all'?'All tools':TOOL_LABELS[v];
-    return '<button class="fpill'+(toolF===v?' on':'')+'" onclick="setFilter(\'tool\',\''+v+'\')" data-fv="'+v+'">'+label+'</button>';
-  }).join('');
-  var sep = '<div class="filter-sep"></div>';
-  var levelBtns = ['all','beginner','intermediate','advanced'].map(function(v){
-    var label = v==='all'?'All levels':v.charAt(0).toUpperCase()+v.slice(1);
-    return '<button class="fpill'+(levelF===v?' on':'')+'" onclick="setFilter(\'level\',\''+v+'\')" data-fv="'+v+'">'+label+'</button>';
-  }).join('');
-  document.getElementById('lib-filters').innerHTML = toolBtns+sep+levelBtns;
-
-  var filtered = TIPS.filter(function(t){
-    return (toolF==='all'||t.tool===toolF) && (levelF==='all'||t.level===levelF);
-  });
-  var learnedCount = filtered.filter(function(t){ return state.learned[t.id]; }).length;
-  document.getElementById('lib-meta').textContent = filtered.length+' tip'+(filtered.length===1?'':'s')+' · '+learnedCount+' learned';
-  document.getElementById('lib-stack').innerHTML = filtered.map(tipCard).join('');
-}
-
-function setFilter(type, value) {
-  if (type==='tool') state.libTool=value;
-  else state.libLevel=value;
-  renderLibrary();
-}
-
-/* ── PROGRESS ── */
-function renderProgress() {
-  var tools = [
-    {key:'claude', name:'Claude', color:getComputedStyle(document.documentElement).getPropertyValue('--copper').trim()},
-    {key:'cowork', name:'Claude Cowork', color:getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()},
-    {key:'code',   name:'Claude Code',  color:getComputedStyle(document.documentElement).getPropertyValue('--blue').trim()}
-  ];
-
-  var html = '<div class="panel-header"><div class="panel-eyebrow">Mastery</div><h2>Your progress</h2><p class="panel-sub">Track what you\'ve applied across all three tools.</p></div>'
-    +'<div class="prog-tools">';
-
-  tools.forEach(function(t) {
-    var all = TIPS.filter(function(tip){ return tip.tool===t.key; });
-    var done = all.filter(function(tip){ return state.learned[tip.id]; }).length;
-    var pct = all.length ? Math.round(done/all.length*100) : 0;
-    var milestone = pct>=90?'Expert user — full command of this tool'
-      : pct>=60?'Advanced — building deep fluency'
-      : pct>=30?'Intermediate — patterns are forming'
-      : 'Getting started';
-    var lit = pct>=60;
-
-    var levelStats = LEVEL_ORDER.map(function(lv){
-      var lvAll = all.filter(function(tip){return tip.level===lv;});
-      var lvDone = lvAll.filter(function(tip){return state.learned[tip.id];}).length;
-      return '<span class="prog-lvl '+lv+'">'+lv.charAt(0).toUpperCase()+lv.slice(1)+': '+lvDone+'/'+lvAll.length+'</span>';
-    }).join('');
-
-    html += '<div class="prog-card">'
-      +'<div class="prog-card-header">'
-      +'<span class="prog-tool-name"><span class="tool-pip '+t.key+'" style="width:9px;height:9px"></span>'+t.name+'</span>'
-      +'<span class="prog-frac">'+done+' / '+all.length+'</span>'
-      +'</div>'
-      +'<div class="prog-track"><div class="prog-fill" style="width:'+pct+'%"></div></div>'
-      +'<div class="prog-levels">'+levelStats+'</div>'
-      +'<div class="milestone'+(lit?' lit':'')+'">'+milestone+'</div>'
-      +'</div>';
-  });
-
-  var totalDone = Object.keys(state.learned).length;
-  var totalAll = TIPS.length;
-  html += '</div>'
-    +'<div style="margin-top:24px;padding:16px 18px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;">'
-    +'<div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;">Overall</div>'
-    +'<div style="font-family:\'Fraunces\',Georgia,serif;font-size:28px;font-weight:700;color:var(--text);line-height:1;">'+totalDone+' <span style="font-size:16px;color:var(--text-muted);font-weight:400">of '+totalAll+' tips learned</span></div>'
-    +'<div style="font-size:13px;color:var(--text-muted);margin-top:6px;">'+Math.round(totalDone/totalAll*100)+'% complete across the full Claude ecosystem</div>'
-    +'</div>';
-
-  document.getElementById('panel-progress').innerHTML = html;
-}
-
-/* ── ADVISOR ── */
-var wState = {task:null, who:null, scope:null, step:1};
-
-function wAnswer(key, val) {
-  wState[key] = val;
-  wState.step++;
-  wUpdateProgress();
-  if (wState.step > 3) { wShowResult(); return; }
-  document.querySelectorAll('.wstep').forEach(function(el){el.classList.remove('active');});
-  document.getElementById('wstep-'+wState.step).classList.add('active');
-}
-
-function wUpdateProgress() {
-  for (var i=1;i<=3;i++) {
-    var d=document.getElementById('wd'+i);
-    d.className='wdot'+(i<wState.step?' done':i===wState.step?' active':'');
-  }
-  document.getElementById('wiz-prog-label').textContent = wState.step<=3 ? 'Step '+wState.step+' of 3' : 'Your recommendation';
-}
-
-var WRECS = {
-  claude: {
-    name:'Claude', cls:'wi-claude',
-    iconSvg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--copper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-    ctaUrl:'https://claude.ai', ctaText:'Open Claude',
-    why:function(s){
-      if(s.scope==='project') return 'This is ongoing work — use Claude with a Project. Projects give Claude persistent context so you never re-explain the client background, goals, or constraints at the start of each session.';
-      if(s.task==='create') return 'Claude is your best drafting partner. It holds the full document in context, iterates quickly, and takes you from rough draft to polished output without switching tools.';
-      if(s.task==='plan') return 'For solo strategy work, Claude lets you think out loud, explore angles, and sharpen a plan before you take it to a client — all without an audience.';
-      return 'For solo work that doesn\'t involve coding or live collaboration, Claude is the right pick — fast, conversational, and available anywhere.';
-    },
-    uses:function(s){
-      var l=['Questions and quick research','Writing and editing documents','Summarizing and analyzing content','Brainstorming and exploring ideas'];
-      if(s.scope==='project') l.unshift('Ongoing client context via Projects');
-      if(s.task==='plan') l.unshift('Strategy exploration and roadmap drafting');
-      return l.slice(0,4);
-    },
-    complement:function(s){
-      if(s.scope==='project'||s.task==='plan') return 'If this plan eventually needs to become a real system or automation, bring it to Claude Code once it\'s well-defined.';
-      return null;
-    }
-  },
-  cowork: {
-    name:'Claude Cowork', cls:'wi-cowork',
-    iconSvg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
-    ctaUrl:'https://claude.ai', ctaText:'Open Cowork',
-    why:function(){return 'Others are in the room — Cowork keeps everyone aligned. Shared sessions mean your team or client sees the same AI context you do. No one re-prompts separately and gets a conflicting answer.';},
-    uses:function(){return['Live strategy sessions with your team','Client discovery and requirements gathering','Reviewing deliverables together with full context','Shared decisions with real-time AI support'];},
-    complement:function(){return 'Do your solo prep in Claude first. Come to the Cowork session with the context already framed — don\'t waste live time on setup.';}
-  },
-  code: {
-    name:'Claude Code', cls:'wi-code',
-    iconSvg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-    ctaUrl:'https://claude.ai/code', ctaText:'Open Claude Code',
-    why:function(s){
-      if(s.scope==='recurring') return 'Recurring and automated tasks belong in Claude Code. It writes and deploys the logic so this runs on its own — you set it up once instead of re-prompting every time.';
-      return 'Building means Claude needs to touch actual files — write code, run commands, and ship. Claude Code does that. A chat interface can describe a build; Claude Code executes it.';
-    },
-    uses:function(){return['Building apps, dashboards, and tools','Writing Make or automation workflows','Creating scripts that run on a schedule','Deploying client-facing systems'];},
-    complement:function(){return 'Use Claude first to think through and spec the build. Then bring that plan to Claude Code to execute it. Claude is for thinking; Claude Code is for shipping.';}
-  }
+/* ---------- priorities & todos (local, or synced via GitHub Issues) ---------- */
+let cfg = { launch: [], staleDaysYellow: 7, staleDaysRed: 21 }, gh = { repos: [], generatedAt: null }, filter = "all";
+const LBL = { prio: "dash:priority", todo: "dash:todo" };
+const SYNC = { get token() { return store.get("token", ""); }, get repo() { return store.get("syncRepo", "") || cfg.syncRepo || ""; } };
+const synced = () => !!(SYNC.token && SYNC.repo);
+let lists = {
+  prio: store.get("prio", null) ?? store.get("prios", []).map((p) => ({ id: uid(), text: p.text ?? p, done: !!p.done })).filter((x) => x.text),
+  todo: store.get("todo", null) ?? store.get("todos", []),
 };
+const persist = () => { store.set("prio", lists.prio); store.set("todo", lists.todo); };
+function setSync(msg, bad) { const el = $("#sync"); el.textContent = msg || ""; el.style.display = msg ? "block" : "none"; el.style.color = bad ? "var(--red)" : ""; $("#syncState").textContent = msg || ""; }
 
-function wGetRec() {
-  if(wState.task==='build') return 'code';
-  if(wState.scope==='recurring') return 'code';
-  if(wState.who==='team') return 'cowork';
-  return 'claude';
+async function api(method, path, body) {
+  const r = await fetch("https://api.github.com" + path, { method, headers: { Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(r.status === 401 ? "token rejected (401)" : r.status === 404 ? "repo not found or no access (404)" : "GitHub error " + r.status);
+  return r.json();
 }
-
-function wShowResult() {
-  document.querySelectorAll('.wstep').forEach(function(el){el.classList.remove('active');});
-  var key = wGetRec();
-  var rec = WRECS[key];
-  document.getElementById('wres-icon').className = 'wres-icon '+rec.cls;
-  document.getElementById('wres-icon').innerHTML = rec.iconSvg;
-  document.getElementById('wres-name').textContent = rec.name;
-  document.getElementById('wres-why').textContent = rec.why(wState);
-  var ul = document.getElementById('wres-uses');
-  ul.innerHTML = '';
-  rec.uses(wState).forEach(function(u){var li=document.createElement('li');li.textContent=u;ul.appendChild(li);});
-  var ct = rec.complement(wState);
-  var cb = document.getElementById('wres-comp');
-  if(ct){document.getElementById('wres-comp-text').textContent=ct;cb.hidden=false;}else{cb.hidden=true;}
-  var cta=document.getElementById('wres-cta');
-  cta.textContent=rec.ctaText;
-  cta.onclick=function(){window.open(rec.ctaUrl,'_blank','noopener');};
-  document.getElementById('wresult').className='wresult active';
+async function pull() {
+  if (!synced()) { setSync(""); return renderLists(); }
+  try {
+    const [p, t] = await Promise.all(["prio", "todo"].map((k) => api("GET", `/repos/${SYNC.repo}/issues?labels=${encodeURIComponent(LBL[k])}&state=all&sort=updated&per_page=100`)));
+    const conv = (arr) => arr.filter((i) => !i.pull_request && (i.state === "open" || (i.state_reason === "completed" && Date.now() - new Date(i.closed_at) < 864e5)))
+      .map((i) => ({ id: String(i.number), n: i.number, text: i.title, done: i.state === "closed" })).sort((a, b) => a.done - b.done);
+    lists.prio = conv(p); lists.todo = conv(t); persist(); setSync("☁️ Synced with GitHub");
+  } catch (e) { setSync("Sync problem: " + e.message + ". Showing saved copy.", true); }
+  renderLists();
 }
-
-function wRestart() {
-  wState={task:null,who:null,scope:null,step:1};
-  document.getElementById('wresult').className='wresult';
-  document.querySelectorAll('.wstep').forEach(function(el){el.classList.remove('active');});
-  document.getElementById('wstep-1').classList.add('active');
-  for(var i=1;i<=3;i++){document.getElementById('wd'+i).className='wdot'+(i===1?' active':'');}
-  document.getElementById('wiz-prog-label').textContent='Step 1 of 3';
+async function push(label, fn) { if (!synced()) return; try { await fn(); setSync("☁️ Synced with GitHub"); } catch (e) { setSync("Couldn't save to GitHub: " + e.message, true); } }
+function addItem(k, text) {
+  const it = { id: uid(), text, done: false }; lists[k].unshift(it); persist(); renderLists();
+  push("add", async () => { const i = await api("POST", `/repos/${SYNC.repo}/issues`, { title: text, labels: [LBL[k]] }); it.n = i.number; it.id = String(i.number); persist(); });
 }
+function setDone(k, id, done) {
+  const it = lists[k].find((x) => x.id === id); if (!it) return; it.done = done; persist(); renderLists();
+  push("done", async () => { if (it.n) await api("PATCH", `/repos/${SYNC.repo}/issues/${it.n}`, done ? { state: "closed", state_reason: "completed" } : { state: "open", state_reason: "reopened" }); });
+}
+function removeItem(k, id) {
+  const it = lists[k].find((x) => x.id === id); lists[k] = lists[k].filter((x) => x.id !== id); persist(); renderLists();
+  push("del", async () => { if (it?.n) await api("PATCH", `/repos/${SYNC.repo}/issues/${it.n}`, { state: "closed", state_reason: "not_planned" }); });
+}
+const rowHtml = (k, t) => `<div class="item ${t.done ? "done" : ""}"><input type="checkbox" data-k="${k}" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="Done"><div class="t">${esc(t.text)}</div><button class="x" data-k="${k}" data-del="${t.id}" aria-label="Delete">✕</button></div>`;
+function renderLists() {
+  $("#prios").innerHTML = lists.prio.length ? lists.prio.map((t) => rowHtml("prio", t)).join("") : '<div class="muted small">What are the 3 outcomes that make today a win?</div>';
+  $("#prioAdd").style.display = lists.prio.filter((t) => !t.done).length >= 3 ? "none" : "flex";
+  $("#todos").innerHTML = lists.todo.length ? lists.todo.map((t) => rowHtml("todo", t)).join("") : '<div class="muted small">Nothing yet. Add your first to-do.</div>';
+  $("#clearDone").style.display = synced() ? "none" : "";
+}
+for (const [k, inp, btn] of [["prio", "#newPrio", "#addPrio"], ["todo", "#newTodo", "#addTodo"]]) {
+  const go = () => { const v = $(inp).value.trim(); if (!v) return; $(inp).value = ""; addItem(k, v); };
+  $(btn).onclick = go; $(inp).addEventListener("keydown", (e) => e.key === "Enter" && go());
+}
+document.addEventListener("click", (e) => { const d = e.target.dataset; if (d.del) removeItem(d.k, d.del); });
+document.addEventListener("change", (e) => { const d = e.target.dataset; if (d.k && d.id && e.target.type === "checkbox") setDone(d.k, d.id, e.target.checked); });
+$("#clearDone").onclick = () => { lists.todo = lists.todo.filter((t) => !t.done); persist(); renderLists(); };
+$("#tokIn").value = ""; $("#repoIn").value = SYNC.repo;
+$("#saveSync").onclick = async () => {
+  const t = $("#tokIn").value.trim(), r = $("#repoIn").value.trim();
+  if (t) store.set("token", t); store.set("syncRepo", r);
+  $("#tokIn").value = ""; if (!synced()) return setSync("Enter a token and owner/repo.", true);
+  setSync("Syncing…"); await pull();
+};
+$("#offSync").onclick = () => { try { localStorage.removeItem("cmd:token"); } catch {} setSync("Disconnected. Lists stay on this device only."); };
 
-/* ── INIT ── */
-loadState();
-renderToday();
+/* ---------- config / github data ---------- */
+async function load() {
+  try { cfg = await (await fetch("data/config.json", { cache: "no-cache" })).json(); } catch {}
+  gh = { repos: [], generatedAt: null };
+  if (synced()) {
+    try { const r = await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/github.json`, { headers: { Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github.raw+json" }, cache: "no-cache" }); if (r.ok) gh = await r.json(); } catch {}
+  }
+  renderLaunch(); renderProjects(); renderBoards(); renderToday(); $("#repoIn").value = SYNC.repo; pull();
+}
+function health(r) {
+  const d = (Date.now() - new Date(r.pushedAt)) / 864e5;
+  if (d > cfg.staleDaysRed) return "red";
+  if (d > cfg.staleDaysYellow || r.openPRs > 3) return "yellow";
+  return "green";
+}
+function renderLaunch() {
+  $("#launch").innerHTML = (cfg.launch || []).map((l) => `<a class="btn tile" href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener"><span class="ic">${esc(l.icon)}</span>${esc(l.label)}</a>`).join("");
+}
+function renderToday() {
+  const repos = gh.repos || [];
+  const items = repos.flatMap((r) => (r.priorityItems || []).map((i) => ({ ...i, repo: r.name })));
+  $("#ghPrio").innerHTML = items.length ? items.map((i) => `<div class="item"><span class="dot red"></span><div class="t"><a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">${esc(i.title)}</a><div class="small muted">${esc(i.repo)} #${i.number}</div></div></div>`).join("")
+    : `<div class="muted small">${gh.generatedAt ? "No open issues labeled priority." : "No GitHub data yet. Run the “Refresh dashboard data” Action once (see More)."}</div>`;
+  const prs = repos.reduce((n, r) => n + (r.openPRs || 0), 0), reds = repos.filter((r) => health(r) === "red").length;
+  $("#needs").innerHTML = gh.generatedAt ? `<b>${prs}</b> open PR${prs === 1 ? "" : "s"} · <b>${items.length}</b> priority issue${items.length === 1 ? "" : "s"} · <b>${reds}</b> stalled project${reds === 1 ? "" : "s"}` : "Connect GitHub data to see what needs you.";
+}
+function renderProjects() {
+  const repos = (gh.repos || []).map((r) => ({ ...r, h: health(r) }));
+  const cnt = (h) => repos.filter((r) => r.h === h).length;
+  $("#summary").innerHTML = [["green", "On track"], ["yellow", "Watch"], ["red", "Stalled"]].map(([h, l]) => `<div><div class="num">${cnt(h)}</div><div class="small muted"><span class="dot ${h}"></span> ${l}</div></div>`).join("");
+  $("#filters").innerHTML = [["all", "All"], ["red", "Stalled"], ["yellow", "Watch"], ["green", "On track"]].map(([k, l]) => `<button data-f="${k}" class="${filter === k ? "on" : ""}">${l}</button>`).join("");
+  const order = { red: 0, yellow: 1, green: 2 };
+  const shown = repos.filter((r) => filter === "all" || r.h === filter).sort((a, b) => order[a.h] - order[b.h]);
+  $("#repos").innerHTML = shown.length ? shown.map((r) => `<div class="card">
+    <div class="repohead"><span class="dot ${r.h}"></span><h3><a href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">${esc(r.name)}</a></h3><span class="small muted">${ago(r.pushedAt)}</span></div>
+    ${r.description ? `<div class="small muted">${esc(r.description)}</div>` : ""}
+    <div>${[`<a class="chip" href="${esc(safeUrl(r.url))}/issues" target="_blank" rel="noopener">${r.openIssues} issues</a>`, `<a class="chip" href="${esc(safeUrl(r.url))}/pulls" target="_blank" rel="noopener">${r.openPRs} PRs</a>`, r.private ? '<span class="chip">private</span>' : ""].join("")}
+    <a class="chip" href="https://claude.ai/code" target="_blank" rel="noopener">⌨️ Open in Claude Code</a></div>
+    ${(r.prs || []).map((p) => `<div class="small" style="margin-top:6px">🔀 <a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>${p.draft ? " (draft)" : ""}</div>`).join("")}
+  </div>`).join("") : `<div class="card muted small">${gh.generatedAt ? "Nothing in this filter." : "No data yet. Enable GitHub Actions and run “Refresh dashboard data”."}</div>`;
+  $("#stamp").textContent = gh.generatedAt ? "Data refreshed " + ago(gh.generatedAt) + " (" + new Date(gh.generatedAt).toLocaleString() + ")" : "";
+}
+function renderBoards() {
+  const ps = (gh.projects || []).filter((p) => !p.closed);
+  $("#boards").innerHTML = ps.map((p) => {
+    const by = {}; p.items.forEach((i) => { const k = i.status || "No status"; by[k] = (by[k] || 0) + 1; });
+    const open = p.items.filter((i) => !/^(done|complete|closed|shipped)/i.test(i.status || "")).slice(0, 8);
+    return `<div class="card"><div class="repohead"><span>📋</span><h3><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a></h3></div>
+      <div>${Object.entries(by).map(([k, v]) => `<span class="chip">${esc(k)}: ${v}</span>`).join("")}</div>
+      ${open.map((i) => `<div class="small" style="margin-top:6px">• ${i.url ? `<a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener">${esc(i.title)}</a>` : esc(i.title)} <span class="muted">(${esc(i.status || "No status")})</span></div>`).join("")}</div>`;
+  }).join("");
+}
+$("#filters").addEventListener("click", (e) => { if (e.target.dataset.f) { filter = e.target.dataset.f; renderProjects(); } });
+$("#refresh").onclick = load;
+
+/* ---------- playbook ---------- */
+$("#chooser").innerHTML = CHOOSER.map((c, i) => `<button data-c="${i}" style="min-height:40px;font-size:14px">${esc(c.q)}</button>`).join("");
+$("#chooser").addEventListener("click", (e) => {
+  const c = CHOOSER[e.target.dataset.c]; if (!c) return; const t = TOOLS[c.tool];
+  $("#answer").innerHTML = `<div class="card rec"><div class="small muted">Use</div><h3>${esc(t.name)} <span class="chip">${esc(t.tag)}</span></h3>
+    <p><b>Why:</b> ${esc(c.why)}</p><p class="small"><b>Best for:</b> ${esc(t.use)}</p><p class="small muted"><b>Skip when:</b> ${esc(t.skip)}</p></div>`;
+  $("#answer").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+$("#rules").innerHTML = RULES.map((r) => `<li>${r}</li>`).join("");
+$("#sops").innerHTML = SOPS.map((s, i) => `<details ${i === 0 ? "open" : ""}><summary>${esc(s.t)}</summary><div class="body"><ol>${s.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol><div class="callout"><b>Done when:</b> ${esc(s.done)}</div></div></details>`).join("");
+
+/* ---------- backup ---------- */
+$("#export").onclick = async () => { const s = JSON.stringify(lists); $("#blob").value = s; try { await navigator.clipboard.writeText(s); } catch {} };
+$("#import").onclick = () => { try { const o = JSON.parse($("#blob").value); if (Array.isArray(o.prio)) lists.prio = o.prio; if (Array.isArray(o.todo)) lists.todo = o.todo; persist(); renderLists(); } catch { alert("That doesn't look like a valid backup."); } };
+
+renderLists(); load();
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
+</body>
+</html>
