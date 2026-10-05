@@ -5,7 +5,7 @@ Mobile-first, installable (PWA) daily launch dashboard: priorities, to-dos, GitH
 ## Go live (one-time, ~5 min)
 1. GitHub repo → Settings → Pages → deploy from branch (root).
 2. Actions tab → run **Refresh dashboard data** once (it then runs every ~20 min).
-3. Create a classic token (github.com/settings/tokens) with scopes `repo` and `read:project` (add `project` only if you want write access). Add it as a repo secret named `GH_READ_TOKEN` so the Action can read private repos and Projects boards.
+3. Create a classic token (github.com/settings/tokens) with scopes `repo` and `read:project` (add `project` only if you want write access). Save it as secret `GH_READ_TOKEN` (the workflow reads it from the GitHub environment of that name). The Action writes `github.json` into the private sync repo, never into this publicly hosted one.
 4. Open the Pages URL on your phone → Add to Home Screen.
 5. On each device: More → GitHub sync → paste the token and the `owner/repo` for sync issues → Save & sync. The token stays in that browser only.
 

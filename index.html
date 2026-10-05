@@ -274,7 +274,10 @@ $("#offSync").onclick = () => { try { localStorage.removeItem("cmd:token"); } ca
 /* ---------- config / github data ---------- */
 async function load() {
   try { cfg = await (await fetch("data/config.json", { cache: "no-cache" })).json(); } catch {}
-  try { gh = await (await fetch("data/github.json", { cache: "no-cache" })).json(); } catch {}
+  gh = { repos: [], generatedAt: null };
+  if (synced()) {
+    try { const r = await fetch(`https://api.github.com/repos/${SYNC.repo}/contents/github.json`, { headers: { Authorization: "Bearer " + SYNC.token, Accept: "application/vnd.github.raw+json" }, cache: "no-cache" }); if (r.ok) gh = await r.json(); } catch {}
+  }
   renderLaunch(); renderProjects(); renderBoards(); renderToday(); $("#repoIn").value = SYNC.repo; pull();
 }
 function health(r) {

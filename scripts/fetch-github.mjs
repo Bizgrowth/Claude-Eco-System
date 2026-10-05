@@ -49,5 +49,15 @@ if (cfg.projects?.enabled) {
       items: p.items.nodes.map((n) => ({ title: n.content?.title ?? "(untitled)", url: n.content?.url ?? null, status: n.fieldValueByName?.name ?? null })) }));
   } catch (e) { console.warn("Projects skipped:", e.message); }
 }
-await writeFile(new URL("../data/github.json", import.meta.url), JSON.stringify({ generatedAt: new Date().toISOString(), repos: out, projects }, null, 1));
+const payload = JSON.stringify({ generatedAt: new Date().toISOString(), repos: out, projects }, null, 1);
+// Pages sites are public, so private data goes to the private sync repo (DATA_REPO), not into this repo.
+if (process.env.DATA_REPO) {
+  const url = `https://api.github.com/repos/${process.env.DATA_REPO}/contents/github.json`;
+  const cur = await fetch(url, { headers: H });
+  const sha = cur.ok ? (await cur.json()).sha : undefined;
+  const put = await fetch(url, { method: "PUT", headers: H, body: JSON.stringify({ message: "chore: refresh dashboard data", content: Buffer.from(payload).toString("base64"), sha }) });
+  if (!put.ok) throw new Error(`Could not write github.json to ${process.env.DATA_REPO}: ${put.status}`);
+} else {
+  await writeFile(new URL("../data/github.json", import.meta.url), payload); // local testing only
+}
 console.log(`Wrote ${out.length} repos`);
