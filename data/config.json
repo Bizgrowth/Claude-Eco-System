@@ -1,0 +1,19 @@
+{
+  "owner": "bizgrowth",
+  "ownerType": "org",
+  "includeArchived": false,
+  "excludeRepos": [],
+  "priorityLabels": ["priority", "p1", "urgent"],
+  "staleDaysYellow": 7,
+  "staleDaysRed": 21,
+  "launch": [
+    { "label": "Claude Chat", "icon": "💬", "url": "https://claude.ai/new" },
+    { "label": "Claude Code", "icon": "⌨️", "url": "https://claude.ai/code" },
+    { "label": "Cowork (desktop app)", "icon": "🗂️", "url": "https://claude.ai/download" },
+    { "label": "GitHub", "icon": "🐙", "url": "https://github.com/bizgrowth" },
+    { "label": "GitHub Projects", "icon": "📋", "url": "https://github.com/orgs/bizgrowth/projects" },
+    { "label": "All my PRs", "icon": "🔀", "url": "https://github.com/pulls" },
+    { "label": "Anthropic Docs", "icon": "📚", "url": "https://docs.claude.com" },
+    { "label": "Claude Code Docs", "icon": "📖", "url": "https://code.claude.com/docs" }
+  ]
+}
