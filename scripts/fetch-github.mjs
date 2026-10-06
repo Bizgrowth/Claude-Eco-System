@@ -12,11 +12,24 @@ async function gh(path) {
   if (!r.ok) throw new Error(`${r.status} ${path}`);
   return r.json();
 }
-// Personal account: /user/repos (includes private repos the token can see). Organization: /orgs/<name>/repos.
-const listPath = cfg.ownerType === "user" ? "/user/repos?per_page=100&sort=pushed&affiliation=owner" : `/orgs/${cfg.owner}/repos?per_page=100&sort=pushed`;
-const repos = (await gh(listPath))
-  .filter((r) => r.owner.login.toLowerCase() === cfg.owner.toLowerCase())
-  .filter((r) => (cfg.includeArchived || !r.archived) && !cfg.excludeRepos.includes(r.name));
+// List every repo the token can see (all pages), then keep the ones we want and count what we skip.
+const listBase = cfg.ownerType === "user" ? "/user/repos?affiliation=owner,collaborator,organization_member&sort=pushed" : `/orgs/${cfg.owner}/repos?sort=pushed`;
+let all = [];
+for (let page = 1; page < 20; page++) {
+  const batch = await gh(`${listBase}&per_page=100&page=${page}`);
+  all = all.concat(batch);
+  if (batch.length < 100) break;
+}
+const owners = (cfg.owners?.length ? cfg.owners : [cfg.owner]).map((o) => o.toLowerCase());
+const skipped = { archived: 0, excluded: 0, otherOwners: {} };
+const repos = all.filter((r) => {
+  const o = r.owner.login.toLowerCase();
+  if (!owners.includes(o)) { skipped.otherOwners[r.owner.login] = (skipped.otherOwners[r.owner.login] || 0) + 1; return false; }
+  if (r.archived && !cfg.includeArchived) { skipped.archived++; return false; }
+  if (cfg.excludeRepos.includes(r.name)) { skipped.excluded++; return false; }
+  return true;
+});
+console.log(`Token can see ${all.length} repos; keeping ${repos.length}; skipped:`, JSON.stringify(skipped));
 
 const out = [];
 for (const r of repos) {
@@ -51,7 +64,7 @@ if (cfg.projects?.enabled) {
       items: p.items.nodes.map((n) => ({ title: n.content?.title ?? "(untitled)", url: n.content?.url ?? null, status: n.fieldValueByName?.name ?? null })) }));
   } catch (e) { console.warn("Projects skipped:", e.message); }
 }
-const payload = JSON.stringify({ generatedAt: new Date().toISOString(), repos: out, projects }, null, 1);
+const payload = JSON.stringify({ generatedAt: new Date().toISOString(), total: all.length, skipped, repos: out, projects }, null, 1);
 // Pages sites are public, so private data goes to the private sync repo (DATA_REPO), not into this repo.
 if (process.env.DATA_REPO) {
   const url = `https://api.github.com/repos/${process.env.DATA_REPO}/contents/github.json`;

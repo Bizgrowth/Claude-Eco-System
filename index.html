@@ -311,7 +311,8 @@ function renderProjects() {
     <a class="chip" href="https://claude.ai/code" target="_blank" rel="noopener">⌨️ Open in Claude Code</a></div>
     ${(r.prs || []).map((p) => `<div class="small" style="margin-top:6px">🔀 <a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>${p.draft ? " (draft)" : ""}</div>`).join("")}
   </div>`).join("") : `<div class="card muted small">${gh.generatedAt ? "Nothing in this filter." : "No data yet. Enable GitHub Actions and run “Refresh dashboard data”."}</div>`;
-  $("#stamp").textContent = gh.generatedAt ? "Data refreshed " + ago(gh.generatedAt) + " (" + new Date(gh.generatedAt).toLocaleString() + ")" : "";
+  const sk = gh.skipped || {}, oo = Object.entries(sk.otherOwners || {}), ooN = oo.reduce((n, [, v]) => n + v, 0);
+  $("#stamp").textContent = gh.generatedAt ? "Data refreshed " + ago(gh.generatedAt) + (gh.total ? ` · ${gh.total} repos visible, ${repos.length} shown` + (sk.archived ? `, ${sk.archived} archived hidden` : "") + (ooN ? `, ${ooN} owned by others hidden (${oo.map(([k, v]) => k + " " + v).join(", ")})` : "") : "") : "";
 }
 function renderBoards() {
   const ps = (gh.projects || []).filter((p) => !p.closed);
