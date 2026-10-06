@@ -315,7 +315,7 @@ function renderProjects() {
   $("#stamp").textContent = gh.generatedAt ? "Data refreshed " + ago(gh.generatedAt) + (gh.total ? ` · ${gh.total} repos visible, ${repos.length} shown` + (sk.archived ? `, ${sk.archived} archived hidden` : "") + (ooN ? `, ${ooN} owned by others hidden (${oo.map(([k, v]) => k + " " + v).join(", ")})` : "") : "") : "";
 }
 function renderBoards() {
-  const ps = (gh.projects || []).filter((p) => !p.closed);
+  const ps = (gh.projects || []).filter((p) => !p.closed && p.items.length > 0); // empty boards are hidden
   $("#boards").innerHTML = ps.map((p) => {
     const by = {}; p.items.forEach((i) => { const k = i.status || "No status"; by[k] = (by[k] || 0) + 1; });
     const open = p.items.filter((i) => !/^(done|complete|closed|shipped)/i.test(i.status || "")).slice(0, 8);
