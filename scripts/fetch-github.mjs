@@ -12,8 +12,10 @@ async function gh(path) {
   if (!r.ok) throw new Error(`${r.status} ${path}`);
   return r.json();
 }
-const base = cfg.ownerType === "user" ? `/users/${cfg.owner}` : `/orgs/${cfg.owner}`;
-const repos = (await gh(`${base}/repos?per_page=100&sort=pushed`))
+// Personal account: /user/repos (includes private repos the token can see). Organization: /orgs/<name>/repos.
+const listPath = cfg.ownerType === "user" ? "/user/repos?per_page=100&sort=pushed&affiliation=owner" : `/orgs/${cfg.owner}/repos?per_page=100&sort=pushed`;
+const repos = (await gh(listPath))
+  .filter((r) => r.owner.login.toLowerCase() === cfg.owner.toLowerCase())
   .filter((r) => (cfg.includeArchived || !r.archived) && !cfg.excludeRepos.includes(r.name));
 
 const out = [];
