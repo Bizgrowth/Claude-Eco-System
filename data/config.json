@@ -1,6 +1,6 @@
 {
-  "owner": "bizgrowth",
-  "ownerType": "org",
+  "owner": "Bizgrowth",
+  "ownerType": "user",
   "includeArchived": false,
   "excludeRepos": [],
   "priorityLabels": [
@@ -29,12 +29,12 @@
     {
       "label": "GitHub",
       "icon": "\ud83d\udc19",
-      "url": "https://github.com/bizgrowth"
+      "url": "https://github.com/Bizgrowth"
     },
     {
       "label": "GitHub Projects",
       "icon": "\ud83d\udccb",
-      "url": "https://github.com/orgs/bizgrowth/projects"
+      "url": "https://github.com/Bizgrowth?tab=projects"
     },
     {
       "label": "All my PRs",
