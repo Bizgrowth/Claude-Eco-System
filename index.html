@@ -297,6 +297,9 @@ function renderToday() {
   const prs = repos.reduce((n, r) => n + (r.openPRs || 0), 0), reds = repos.filter((r) => health(r) === "red").length;
   $("#needs").innerHTML = gh.generatedAt ? `<b>${prs}</b> open PR${prs === 1 ? "" : "s"} · <b>${items.length}</b> priority issue${items.length === 1 ? "" : "s"} · <b>${reds}</b> stalled project${reds === 1 ? "" : "s"}` : "Connect GitHub data to see what needs you.";
 }
+function siteLabel(u) {
+  try { const h = new URL(u).hostname.replace(/^www\./, ""); return /netlify\.app$/.test(h) ? "Netlify site" : /vercel\.app$/.test(h) ? "Vercel site" : /github\.io$/.test(h) ? "GitHub Pages" : h; } catch { return "Live site"; }
+}
 function renderProjects() {
   const repos = (gh.repos || []).map((r) => ({ ...r, h: health(r) }));
   const cnt = (h) => repos.filter((r) => r.h === h).length;
@@ -308,7 +311,8 @@ function renderProjects() {
     <div class="repohead"><span class="dot ${r.h}"></span><h3><a href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">${esc(r.name)}</a></h3><span class="small muted">${ago(r.pushedAt)}</span></div>
     ${r.description ? `<div class="small muted">${esc(r.description)}</div>` : ""}
     <div>${[`<a class="chip" href="${esc(safeUrl(r.url))}/issues" target="_blank" rel="noopener">${r.openIssues} issues</a>`, `<a class="chip" href="${esc(safeUrl(r.url))}/pulls" target="_blank" rel="noopener">${r.openPRs} PRs</a>`, r.private ? '<span class="chip">private</span>' : ""].join("")}
-    <a class="chip" href="https://claude.ai/code" target="_blank" rel="noopener">⌨️ Open in Claude Code</a></div>
+    <a class="chip" href="https://claude.ai/code" target="_blank" rel="noopener">⌨️ Open in Claude Code</a>
+    ${r.homepage && /^https?:\/\//.test(r.homepage) ? `<a class="chip" href="${esc(r.homepage)}" target="_blank" rel="noopener">🌐 ${esc(siteLabel(r.homepage))}</a>` : ""}</div>
     ${(r.prs || []).map((p) => `<div class="small" style="margin-top:6px">🔀 <a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>${p.draft ? " (draft)" : ""}</div>`).join("")}
   </div>`).join("") : `<div class="card muted small">${gh.generatedAt ? "Nothing in this filter." : "No data yet. Enable GitHub Actions and run “Refresh dashboard data”."}</div>`;
   const sk = gh.skipped || {}, oo = Object.entries(sk.otherOwners || {}), ooN = oo.reduce((n, [, v]) => n + v, 0);

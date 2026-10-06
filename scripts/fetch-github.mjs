@@ -40,7 +40,7 @@ for (const r of repos) {
   const realIssues = issues.filter((i) => !i.pull_request);
   const labelOf = (i) => i.labels.map((l) => l.name.toLowerCase());
   out.push({
-    name: r.name, url: r.html_url, description: r.description, private: r.private,
+    name: r.name, url: r.html_url, description: r.description, private: r.private, homepage: cfg.liveSites?.[r.name] || r.homepage || null,
     pushedAt: r.pushed_at, defaultBranch: r.default_branch,
     openIssues: realIssues.length, openPRs: prs.length,
     priorityItems: realIssues
