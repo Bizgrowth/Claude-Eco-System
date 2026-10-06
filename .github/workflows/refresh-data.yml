@@ -2,6 +2,9 @@ name: Refresh dashboard data
 on:
   schedule: [{ cron: "*/20 * * * *" }]
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/refresh-data.yml", "scripts/fetch-github.mjs", "data/config.json"]
 permissions:
   contents: read
 jobs:
