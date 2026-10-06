@@ -55,5 +55,8 @@
   "syncRepo": "Bizgrowth/bizgrowth-dashboard-data",
   "projects": {
     "enabled": true
-  }
+  },
+  "owners": [
+    "Bizgrowth"
+  ]
 }
