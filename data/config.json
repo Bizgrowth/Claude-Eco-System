@@ -58,5 +58,8 @@
   },
   "owners": [
     "Bizgrowth"
-  ]
+  ],
+  "liveSites": {
+    "_example-repo-name": "https://example.netlify.app"
+  }
 }
