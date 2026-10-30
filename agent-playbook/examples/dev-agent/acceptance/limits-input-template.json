@@ -1,0 +1,23 @@
+{
+  "_help": "Copy to results.json and fill EVERY null with your real figures. One entry per full-pipeline brief (01 and 02). passed = did it meet the pass criteria. turns = turn counts per role from the transcripts. hit_cap = roles that stopped because they hit their maxTurns. cost = total cost in whatever unit you track (e.g. dollars). minutes = wall-clock time for both parts. For a failed run you may leave the numbers null.",
+  "runs": [
+    {
+      "brief": "01",
+      "passed": null,
+      "cost": null,
+      "minutes": null,
+      "interventions": null,
+      "turns": { "researcher": null, "designer": null, "builder": null, "reviewer": null },
+      "hit_cap": []
+    },
+    {
+      "brief": "02",
+      "passed": null,
+      "cost": null,
+      "minutes": null,
+      "interventions": null,
+      "turns": { "researcher": null, "designer": null, "builder": null, "reviewer": null },
+      "hit_cap": []
+    }
+  ]
+}
